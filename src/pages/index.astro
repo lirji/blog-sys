@@ -2,9 +2,10 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PostCard from '../components/PostCard.astro';
 import { SITE_DESCRIPTION } from '../consts';
-import { getPublishedPosts, postHref, getCategory } from '../lib/posts';
+import { getPublishedPosts, getPopularPosts, postHref, getCategory } from '../lib/posts';
 
 const posts = (await getPublishedPosts()).slice(0, 4);
+const popular = await getPopularPosts(5);
 ---
 
 <BaseLayout>
@@ -56,4 +57,36 @@ const posts = (await getPublishedPosts()).slice(0, 4);
       }
     </div>
   </section>
+
+  {
+    popular.length > 0 && (
+      <section class="mt-16">
+        <h2 class="mb-6 text-xl font-semibold tracking-tight">🔥 热门文章</h2>
+        <ol class="overflow-hidden rounded-2xl border" style="border-color: var(--border); background: var(--card)">
+          {popular.map((post, i) => (
+            <li>
+              <a
+                href={postHref(post)}
+                class="group flex items-center gap-4 border-b px-5 py-3.5 last:border-b-0 transition-colors hover:bg-[var(--bg-soft)]"
+                style="border-color: var(--border)"
+              >
+                <span
+                  class="w-6 shrink-0 text-center text-lg font-bold"
+                  style={i < 3 ? 'color: var(--accent)' : 'color: var(--text-muted)'}
+                >
+                  {i + 1}
+                </span>
+                <span class="min-w-0 flex-1 truncate font-medium transition-colors group-hover:text-[var(--accent)]">
+                  {post.data.title}
+                </span>
+                <span class="shrink-0 text-xs" style="color: var(--text-muted)">
+                  👁 {post.data.views}
+                </span>
+              </a>
+            </li>
+          ))}
+        </ol>
+      </section>
+    )
+  }
 </BaseLayout>

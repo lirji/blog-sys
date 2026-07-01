@@ -54,6 +54,14 @@ body {
   background: color-mix(in oklch, var(--accent) 25%, transparent);
 }
 
+/* 搜索关键词高亮 */
+mark {
+  background: color-mix(in oklch, var(--accent) 28%, transparent);
+  color: inherit;
+  border-radius: 0.2rem;
+  padding: 0 0.1em;
+}
+
 /* 尊重减少动效偏好 */
 @media (prefers-reduced-motion: reduce) {
   html {

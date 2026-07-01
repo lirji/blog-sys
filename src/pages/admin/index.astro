@@ -1,24 +1,41 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro';
-import { getAllPosts, deletePost } from '../../lib/posts';
+import { getPostsPage, getAllCategories, deletePost } from '../../lib/posts';
 
-// 删除
+const PAGE_SIZE = 10;
+
+// 删除后回到原来的分页/筛选
 if (Astro.request.method === 'POST') {
   const form = await Astro.request.formData();
   if (form.get('_action') === 'delete') {
     const id = Number(form.get('id'));
     if (id) await deletePost(id);
   }
-  return Astro.redirect('/admin');
+  const back = Astro.request.headers.get('referer') ?? '/admin';
+  return Astro.redirect(back);
 }
 
-const posts = await getAllPosts();
+const params = Astro.url.searchParams;
+const category = params.get('category') ?? '';
+const page = Number(params.get('page')) || 1;
+
+const { items, total, totalPages } = await getPostsPage({
+  page,
+  pageSize: PAGE_SIZE,
+  category: category || undefined,
+});
+const categories = await getAllCategories();
 const fmt = (d: Date) => new Date(d).toISOString().slice(0, 10);
+
+// 保留 category 的分页链接
+const pageUrl = (p: number) =>
+  `/admin?${new URLSearchParams({ ...(category ? { category } : {}), page: String(p) })}`;
+const catUrl = (c: string) => (c ? `/admin?category=${encodeURIComponent(c)}` : '/admin');
 ---
 
 <AdminLayout title="文章列表">
-  <div class="mb-8 flex items-center justify-between">
-    <h1 class="text-2xl font-bold tracking-tight">文章（{posts.length}）</h1>
+  <div class="mb-6 flex items-center justify-between">
+    <h1 class="text-2xl font-bold tracking-tight">文章（{total}）</h1>
     <a
       href="/admin/new"
       class="rounded-lg px-4 py-2 text-sm font-medium text-white transition-transform hover:-translate-y-0.5"
@@ -28,16 +45,39 @@ const fmt = (d: Date) => new Date(d).toISOString().slice(0, 10);
     </a>
   </div>
 
+  {/* 分类筛选 */}
+  <div class="mb-6 flex flex-wrap gap-2 text-sm">
+    <a
+      href="/admin"
+      class="rounded-full border px-3 py-1 transition-colors"
+      style={!category
+        ? 'border-color: var(--accent); color: var(--accent)'
+        : 'border-color: var(--border); color: var(--text-muted)'}
+    >
+      全部
+    </a>
+    {
+      categories.map((c) => (
+        <a
+          href={catUrl(c.category)}
+          class="rounded-full border px-3 py-1 transition-colors"
+          style={category === c.category
+            ? 'border-color: var(--accent); color: var(--accent)'
+            : 'border-color: var(--border); color: var(--text-muted)'}
+        >
+          {c.category} {c.count}
+        </a>
+      ))
+    }
+  </div>
+
   <div class="overflow-hidden rounded-xl border" style="border-color: var(--border)">
     {
-      posts.length === 0 ? (
-        <p class="p-6 text-sm" style="color: var(--text-muted)">还没有文章，点右上角新建一篇。</p>
+      items.length === 0 ? (
+        <p class="p-6 text-sm" style="color: var(--text-muted)">没有文章。</p>
       ) : (
-        posts.map((post) => (
-          <div
-            class="flex items-center justify-between gap-4 border-b px-5 py-4 last:border-b-0"
-            style="border-color: var(--border)"
-          >
+        items.map((post) => (
+          <div class="flex items-center justify-between gap-4 border-b px-5 py-4 last:border-b-0" style="border-color: var(--border)">
             <div class="min-w-0">
               <div class="flex items-center gap-2">
                 <a href={`/admin/edit/${post.id}`} class="truncate font-medium transition-colors hover:text-[var(--accent)]">
@@ -50,7 +90,7 @@ const fmt = (d: Date) => new Date(d).toISOString().slice(0, 10);
                 )}
               </div>
               <p class="mt-0.5 text-xs" style="color: var(--text-muted)">
-                {post.data.category} · {fmt(post.data.pubDate)} · /blog/{post.slug}
+                {post.data.category} · {fmt(post.data.pubDate)} · 👁 {post.data.views} · /blog/{post.slug}
               </p>
             </div>
             <div class="flex shrink-0 items-center gap-3 text-sm">
@@ -69,4 +109,29 @@ const fmt = (d: Date) => new Date(d).toISOString().slice(0, 10);
       )
     }
   </div>
+
+  {/* 分页 */}
+  {
+    totalPages > 1 && (
+      <div class="mt-6 flex items-center justify-center gap-4 text-sm">
+        {page > 1 ? (
+          <a href={pageUrl(page - 1)} class="rounded-lg border px-3 py-1.5 transition-colors hover:bg-[var(--bg-soft)]" style="border-color: var(--border)">
+            ← 上一页
+          </a>
+        ) : (
+          <span class="rounded-lg border px-3 py-1.5 opacity-40" style="border-color: var(--border)">← 上一页</span>
+        )}
+        <span style="color: var(--text-muted)">
+          第 {page} / {totalPages} 页
+        </span>
+        {page < totalPages ? (
+          <a href={pageUrl(page + 1)} class="rounded-lg border px-3 py-1.5 transition-colors hover:bg-[var(--bg-soft)]" style="border-color: var(--border)">
+            下一页 →
+          </a>
+        ) : (
+          <span class="rounded-lg border px-3 py-1.5 opacity-40" style="border-color: var(--border)">下一页 →</span>
+        )}
+      </div>
+    )
+  }
 </AdminLayout>

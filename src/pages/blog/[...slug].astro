@@ -1,6 +1,6 @@
 ---
 import PostLayout from '../../layouts/PostLayout.astro';
-import { getPostBySlug, getCategory } from '../../lib/posts';
+import { getPostBySlug, getCategory, getAdjacentPosts, recordView } from '../../lib/posts';
 import { renderMarkdown } from '../../lib/markdown';
 
 const { slug } = Astro.params;
@@ -9,6 +9,13 @@ if (!post || post.data.draft) {
   return new Response(null, { status: 404, statusText: 'Not Found' });
 }
 const { html, headings } = renderMarkdown(post.body);
+const { newer, older } = await getAdjacentPosts(post);
+
+const ip =
+  Astro.clientAddress ||
+  Astro.request.headers.get('x-forwarded-for')?.split(',')[0].trim() ||
+  'unknown';
+const views = await recordView(post.id, ip);
 ---
 
 <PostLayout
@@ -20,6 +27,9 @@ const { html, headings } = renderMarkdown(post.body);
   cover={post.data.cover ?? undefined}
   category={getCategory(post)}
   headings={headings}
+  newer={newer}
+  older={older}
+  views={views}
 >
   <Fragment set:html={html} />
 </PostLayout>

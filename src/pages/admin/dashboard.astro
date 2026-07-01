@@ -1,0 +1,159 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import ViewTrendChart from '../../components/ViewTrendChart.astro';
+import { getDashboardStats, getViewTrend } from '../../lib/posts';
+
+const s = await getDashboardStats();
+const days = Astro.url.searchParams.get('days') === '30' ? 30 : 7;
+const trend = await getViewTrend(days);
+const maxCat = Math.max(1, ...s.categories.map((c) => c.count));
+const maxTag = Math.max(1, ...s.topTags.map((t) => t.count));
+
+const fmtTime = (d: Date) =>
+  new Date(d).toLocaleString('zh-CN', {
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+const stats = [
+  { label: '文章总数', value: s.totalPosts, sub: `${s.published} 已发布 · ${s.drafts} 草稿` },
+  { label: '总浏览量', value: s.totalViews, sub: '所有文章累计' },
+  { label: '独立访客', value: s.uniqueVisitors, sub: '按 IP 去重' },
+  { label: '图片', value: s.totalImages, sub: '存于数据库' },
+];
+---
+
+<AdminLayout title="数据看板">
+  <h1 class="mb-6 text-2xl font-bold tracking-tight">数据看板</h1>
+
+  {/* 概览卡片 */}
+  <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
+    {
+      stats.map((c) => (
+        <div class="rounded-2xl border p-5" style="border-color: var(--border); background: var(--card)">
+          <p class="text-sm" style="color: var(--text-muted)">{c.label}</p>
+          <p class="mt-1 text-3xl font-bold tracking-tight" style="color: var(--accent)">{c.value}</p>
+          <p class="mt-1 text-xs" style="color: var(--text-muted)">{c.sub}</p>
+        </div>
+      ))
+    }
+  </div>
+
+  {/* 浏览趋势 */}
+  <section class="mt-6 rounded-2xl border p-6" style="border-color: var(--border); background: var(--card)">
+    <div class="mb-4 flex items-center justify-between">
+      <h2 class="font-semibold tracking-tight">📈 浏览趋势</h2>
+      <div class="flex gap-1 text-sm">
+        <a
+          href="/admin/dashboard?days=7"
+          class="rounded-lg px-3 py-1 transition-colors"
+          style={days === 7 ? 'background: var(--accent); color: #fff' : 'color: var(--text-muted)'}
+        >
+          近 7 天
+        </a>
+        <a
+          href="/admin/dashboard?days=30"
+          class="rounded-lg px-3 py-1 transition-colors"
+          style={days === 30 ? 'background: var(--accent); color: #fff' : 'color: var(--text-muted)'}
+        >
+          近 30 天
+        </a>
+      </div>
+    </div>
+    <ViewTrendChart points={trend} />
+  </section>
+
+  <div class="mt-6 grid gap-6 lg:grid-cols-2">
+    {/* 热门文章 */}
+    <section class="rounded-2xl border p-6" style="border-color: var(--border); background: var(--card)">
+      <h2 class="mb-4 font-semibold tracking-tight">🔥 热门文章</h2>
+      {
+        s.topPosts.length === 0 ? (
+          <p class="text-sm" style="color: var(--text-muted)">暂无数据。</p>
+        ) : (
+          <ol class="space-y-1">
+            {s.topPosts.map((p, i) => (
+              <li>
+                <a href={`/blog/${p.slug}/`} target="_blank" class="group flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-[var(--bg-soft)]">
+                  <span class="w-5 text-center font-bold" style={i < 3 ? 'color: var(--accent)' : 'color: var(--text-muted)'}>
+                    {i + 1}
+                  </span>
+                  <span class="min-w-0 flex-1 truncate transition-colors group-hover:text-[var(--accent)]">{p.data.title}</span>
+                  <span class="shrink-0 text-xs" style="color: var(--text-muted)">👁 {p.data.views}</span>
+                </a>
+              </li>
+            ))}
+          </ol>
+        )
+      }
+    </section>
+
+    {/* 分类分布 */}
+    <section class="rounded-2xl border p-6" style="border-color: var(--border); background: var(--card)">
+      <h2 class="mb-4 font-semibold tracking-tight">📂 分类分布</h2>
+      <div class="space-y-3">
+        {
+          s.categories.map((c) => (
+            <a href={`/admin?category=${encodeURIComponent(c.category)}`} class="block">
+              <div class="mb-1 flex justify-between text-sm">
+                <span>{c.category}</span>
+                <span style="color: var(--text-muted)">{c.count}</span>
+              </div>
+              <div class="h-2 overflow-hidden rounded-full" style="background: var(--bg-soft)">
+                <div class="h-full rounded-full" style={`width: ${(c.count / maxCat) * 100}%; background: var(--accent)`} />
+              </div>
+            </a>
+          ))
+        }
+      </div>
+    </section>
+  </div>
+
+  <div class="mt-6 grid gap-6 lg:grid-cols-2">
+    {/* 热门标签 */}
+    <section class="rounded-2xl border p-6" style="border-color: var(--border); background: var(--card)">
+      <h2 class="mb-4 font-semibold tracking-tight">🏷 热门标签</h2>
+      {
+        s.topTags.length === 0 ? (
+          <p class="text-sm" style="color: var(--text-muted)">暂无标签。</p>
+        ) : (
+          <div class="flex flex-wrap gap-2">
+            {s.topTags.map((t) => (
+              <a
+                href={`/tags/${t.tag}/`}
+                target="_blank"
+                class="rounded-full border px-3 py-1 text-sm transition-colors hover:text-[var(--accent)]"
+                style={`border-color: var(--border); font-size: ${0.75 + (t.count / maxTag) * 0.4}rem`}
+              >
+                #{t.tag} <span style="color: var(--text-muted)">{t.count}</span>
+              </a>
+            ))}
+          </div>
+        )
+      }
+    </section>
+
+    {/* 最近访问 */}
+    <section class="rounded-2xl border p-6" style="border-color: var(--border); background: var(--card)">
+      <h2 class="mb-4 font-semibold tracking-tight">🕑 最近被访问</h2>
+      {
+        s.recentViewed.length === 0 ? (
+          <p class="text-sm" style="color: var(--text-muted)">还没有访问记录。</p>
+        ) : (
+          <ul class="space-y-1">
+            {s.recentViewed.map((r) => (
+              <li>
+                <a href={`/blog/${r.slug}/`} target="_blank" class="group flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-[var(--bg-soft)]">
+                  <span class="min-w-0 flex-1 truncate transition-colors group-hover:text-[var(--accent)]">{r.title}</span>
+                  <span class="shrink-0 text-xs" style="color: var(--text-muted)">{fmtTime(r.viewedAt)}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        )
+      }
+    </section>
+  </div>
+</AdminLayout>

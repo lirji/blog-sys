@@ -46,8 +46,12 @@ const inputCls =
   </div>
 
   <div>
-    <label class="mb-1 block text-sm font-medium">封面图 URL（可选）</label>
-    <input name="cover" value={d?.cover ?? ''} placeholder="/covers/xxx.svg" class={inputCls} style="border-color: var(--border)" />
+    <label class="mb-1 block text-sm font-medium">封面图（可选）</label>
+    <div class="flex gap-2">
+      <input id="cover-input" name="cover" value={d?.cover ?? ''} placeholder="/media/1 或直接上传" class={inputCls} style="border-color: var(--border)" />
+      <button type="button" id="cover-upload-btn" class="shrink-0 rounded-lg border px-4 text-sm transition-colors hover:bg-[var(--bg-soft)]" style="border-color: var(--border)">上传</button>
+      <input type="file" id="cover-file" accept="image/*" class="hidden" />
+    </div>
   </div>
 
   <div>
@@ -56,8 +60,29 @@ const inputCls =
   </div>
 
   <div>
-    <label class="mb-1 block text-sm font-medium">正文（Markdown）</label>
-    <textarea name="body" rows="18" class={`${inputCls} font-mono text-sm`} style="border-color: var(--border)">{post?.body ?? ''}</textarea>
+    <div class="mb-1 flex items-center justify-between">
+      <label class="block text-sm font-medium">正文（Markdown）</label>
+      <div class="flex items-center gap-3 text-xs" style="color: var(--text-muted)">
+        <button type="button" id="body-upload-btn" class="rounded border px-2 py-1 transition-colors hover:bg-[var(--bg-soft)]" style="border-color: var(--border)">🖼 插入图片</button>
+        <span>也可直接把图片拖入 / 粘贴到编辑区</span>
+      </div>
+    </div>
+    <input type="file" id="body-file" accept="image/*" class="hidden" />
+    <div class="grid gap-4 lg:grid-cols-2">
+      <textarea
+        id="body-editor"
+        name="body"
+        rows="22"
+        class={`${inputCls} font-mono text-sm`}
+        style="border-color: var(--border)"
+        spellcheck="false">{post?.body ?? ''}</textarea>
+      <div
+        id="body-preview"
+        class="prose max-w-none overflow-auto rounded-lg border p-4"
+        style="border-color: var(--border); background: var(--bg-soft); max-height: 40rem"
+      >
+      </div>
+    </div>
   </div>
 
   <label class="flex items-center gap-2 text-sm">
@@ -74,3 +99,103 @@ const inputCls =
     </a>
   </div>
 </form>
+
+<script>
+  const editor = document.getElementById('body-editor') as HTMLTextAreaElement | null;
+  const preview = document.getElementById('body-preview') as HTMLElement | null;
+
+  // ---- 实时预览（复用服务端同一套渲染，所见即所得）----
+  if (editor && preview) {
+    let timer: ReturnType<typeof setTimeout>;
+    const render = async () => {
+      try {
+        const res = await fetch('/admin/preview', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ markdown: editor.value }),
+        });
+        preview.innerHTML = await res.text();
+      } catch {
+        /* 忽略预览错误 */
+      }
+    };
+    editor.addEventListener('input', () => {
+      clearTimeout(timer);
+      timer = setTimeout(render, 250);
+    });
+    render();
+
+    // 拖拽 / 粘贴图片
+    editor.addEventListener('paste', (e) => {
+      const items = e.clipboardData?.items ?? [];
+      for (const it of items) {
+        if (it.type.startsWith('image/')) {
+          e.preventDefault();
+          const f = it.getAsFile();
+          if (f) uploadInto(editor, f);
+        }
+      }
+    });
+    editor.addEventListener('dragover', (e) => e.preventDefault());
+    editor.addEventListener('drop', (e) => {
+      const f = e.dataTransfer?.files?.[0];
+      if (f && f.type.startsWith('image/')) {
+        e.preventDefault();
+        uploadInto(editor, f);
+      }
+    });
+  }
+
+  // ---- 上传公共逻辑 ----
+  async function upload(file: File): Promise<string | null> {
+    const fd = new FormData();
+    fd.append('file', file);
+    const res = await fetch('/admin/upload', { method: 'POST', body: fd });
+    if (!res.ok) {
+      const { error } = await res.json().catch(() => ({ error: '上传失败' }));
+      alert('上传失败：' + error);
+      return null;
+    }
+    const { url } = await res.json();
+    return url as string;
+  }
+
+  function insertAtCursor(ta: HTMLTextAreaElement, text: string) {
+    const s = ta.selectionStart;
+    const e = ta.selectionEnd;
+    ta.value = ta.value.slice(0, s) + text + ta.value.slice(e);
+    ta.selectionStart = ta.selectionEnd = s + text.length;
+    ta.focus();
+  }
+
+  async function uploadInto(ta: HTMLTextAreaElement, file: File) {
+    const url = await upload(file);
+    if (!url) return;
+    insertAtCursor(ta, `![${file.name}](${url})\n`);
+    ta.dispatchEvent(new Event('input'));
+  }
+
+  // 正文插入图片按钮
+  const bodyBtn = document.getElementById('body-upload-btn');
+  const bodyFile = document.getElementById('body-file') as HTMLInputElement | null;
+  bodyBtn?.addEventListener('click', () => bodyFile?.click());
+  bodyFile?.addEventListener('change', () => {
+    const f = bodyFile.files?.[0];
+    if (f && editor) uploadInto(editor, f);
+    bodyFile.value = '';
+  });
+
+  // 封面上传按钮
+  const coverBtn = document.getElementById('cover-upload-btn');
+  const coverFile = document.getElementById('cover-file') as HTMLInputElement | null;
+  const coverInput = document.getElementById('cover-input') as HTMLInputElement | null;
+  coverBtn?.addEventListener('click', () => coverFile?.click());
+  coverFile?.addEventListener('change', async () => {
+    const f = coverFile.files?.[0];
+    if (f) {
+      const url = await upload(f);
+      if (url && coverInput) coverInput.value = url;
+    }
+    coverFile.value = '';
+  });
+</script>

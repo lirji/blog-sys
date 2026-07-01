@@ -1,0 +1,68 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import FormattedDate from '../components/FormattedDate.astro';
+import { searchPosts, postHref, getCategory } from '../lib/posts';
+import { highlight, snippet } from '../lib/highlight';
+
+const q = (Astro.url.searchParams.get('q') ?? '').trim();
+const results = q ? await searchPosts(q) : [];
+---
+
+<BaseLayout title="搜索">
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">搜索</h1>
+  </div>
+
+  <form method="GET" action="/search" class="mb-8">
+    <input
+      type="search"
+      name="q"
+      value={q}
+      placeholder="输入关键词，回车搜索…"
+      autofocus
+      class="w-full rounded-xl border bg-transparent px-4 py-3 outline-none focus:border-[var(--accent)]"
+      style="border-color: var(--border)"
+    />
+  </form>
+
+  {
+    q && (
+      <p class="mb-6 text-sm" style="color: var(--text-muted)">
+        关键词「{q}」找到 {results.length} 篇。
+      </p>
+    )
+  }
+
+  <div class="grid gap-4">
+    {
+      results.map((post) => (
+        <a
+          href={postHref(post)}
+          class="group block rounded-2xl border p-6 transition-all duration-200 hover:-translate-y-0.5"
+          style="border-color: var(--border); background: var(--card)"
+          onmouseover="this.style.borderColor='var(--accent)'"
+          onmouseout="this.style.borderColor='var(--border)'"
+        >
+          <div class="mb-2 flex items-center gap-3 text-xs" style="color: var(--text-muted)">
+            <span class="font-medium" style="color: var(--accent)">{getCategory(post)}</span>
+            <FormattedDate date={post.data.pubDate} />
+          </div>
+          <h3
+            class="mb-1.5 text-lg font-semibold tracking-tight transition-colors group-hover:text-[var(--accent)]"
+            set:html={highlight(post.data.title, q)}
+          />
+          <p class="text-sm leading-relaxed" style="color: var(--text-muted)" set:html={highlight(post.data.description, q)} />
+          <p class="mt-2 text-sm leading-relaxed" style="color: var(--text-muted)" set:html={snippet(post.body, q)} />
+        </a>
+      ))
+    }
+  </div>
+
+  {
+    q && results.length === 0 && (
+      <p class="py-12 text-center" style="color: var(--text-muted)">
+        没有匹配的文章，换个词试试。
+      </p>
+    )
+  }
+</BaseLayout>

@@ -30,9 +30,14 @@ const { title = '后台', showNav = true } = Astro.props;
       showNav && (
         <header class="border-b" style="border-color: var(--border)">
           <div class="mx-auto flex h-14 max-w-4xl items-center justify-between px-5">
-            <a href="/admin" class="font-semibold tracking-tight">
-              管理后台
-            </a>
+            <div class="flex items-center gap-5">
+              <a href="/admin" class="font-semibold tracking-tight">管理后台</a>
+              <nav class="flex items-center gap-4 text-sm" style="color: var(--text-muted)">
+                <a href="/admin" class="transition-colors hover:text-[var(--accent)]">文章</a>
+                <a href="/admin/import" class="transition-colors hover:text-[var(--accent)]">导入</a>
+                <a href="/admin/dashboard" class="transition-colors hover:text-[var(--accent)]">看板</a>
+              </nav>
+            </div>
             <div class="flex items-center gap-4 text-sm" style="color: var(--text-muted)">
               <a href="/" target="_blank" class="transition-colors hover:text-[var(--accent)]">
                 查看站点 ↗

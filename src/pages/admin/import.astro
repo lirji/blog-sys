@@ -1,0 +1,246 @@
+---
+import { extname, basename } from 'node:path';
+import AdmZip from 'adm-zip';
+import matter from 'gray-matter';
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { db } from '../../../db';
+import { posts, images } from '../../../db/schema';
+import {
+  IMG_MIME,
+  cleanSlug,
+  toSlug,
+  deriveTitle,
+  makeDescription,
+  findImageRefs,
+  replaceRef,
+} from '../../lib/import';
+
+interface DocInput {
+  name: string;
+  raw: string;
+  dir: string; // zip 内相对目录（用于解析相对图片 & 分类）
+  imgMap: Map<string, { name: string; mime: string; buf: Buffer }>;
+}
+interface ResultItem {
+  title: string;
+  slug: string;
+  category: string;
+  imgSaved: number;
+  imgSkipped: number;
+  draft: boolean;
+}
+
+function normalizePosix(p: string): string {
+  const parts: string[] = [];
+  for (const seg of p.split('/')) {
+    if (seg === '' || seg === '.') continue;
+    if (seg === '..') parts.pop();
+    else parts.push(seg);
+  }
+  return parts.join('/');
+}
+
+async function saveImage(name: string, mime: string, buf: Buffer): Promise<string> {
+  const [row] = await db.insert(images).values({ filename: name, mime, data: buf }).returning({ id: images.id });
+  return `/media/${row.id}`;
+}
+
+async function resolveImg(src: string, doc: DocInput): Promise<string | null> {
+  try {
+    if (src.startsWith('data:')) {
+      const m = src.match(/^data:([^;]+);base64,(.*)$/s);
+      if (!m || !m[1].startsWith('image/')) return null;
+      return await saveImage('inline', m[1], Buffer.from(m[2], 'base64'));
+    }
+    if (/^https?:\/\//i.test(src)) {
+      const res = await fetch(src);
+      if (!res.ok) return null;
+      const mime = res.headers.get('content-type')?.split(';')[0]?.trim() || IMG_MIME[extname(src).toLowerCase()] || 'image/png';
+      if (!mime.startsWith('image/')) return null;
+      return await saveImage(basename(new URL(src).pathname) || 'image', mime, Buffer.from(await res.arrayBuffer()));
+    }
+    // 相对路径 → 从 zip 里找
+    const clean = src.replace(/^\.\//, '');
+    const cands = [normalizePosix((doc.dir ? doc.dir + '/' : '') + clean), normalizePosix(clean)];
+    let key = cands.find((c) => doc.imgMap.has(c));
+    if (!key) {
+      const bn = clean.split('/').pop();
+      key = [...doc.imgMap.keys()].find((k) => k.split('/').pop() === bn);
+    }
+    if (!key) return null;
+    const e = doc.imgMap.get(key)!;
+    return await saveImage(e.name, e.mime, e.buf);
+  } catch {
+    return null;
+  }
+}
+
+let result: { items: ResultItem[]; skippedFiles: string[] } | null = null;
+let error = '';
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const formCategory = String(form.get('category') ?? '').trim();
+  const asDraft = form.get('draft') === 'on';
+  const uploads = form.getAll('files').filter((f): f is File => f instanceof File && f.size > 0);
+
+  const docs: DocInput[] = [];
+  const skippedFiles: string[] = [];
+
+  for (const file of uploads) {
+    const lower = file.name.toLowerCase();
+    if (lower.endsWith('.zip')) {
+      const zip = new AdmZip(Buffer.from(await file.arrayBuffer()));
+      const imgMap = new Map<string, { name: string; mime: string; buf: Buffer }>();
+      for (const e of zip.getEntries()) {
+        if (e.isDirectory) continue;
+        const mime = IMG_MIME[extname(e.entryName).toLowerCase()];
+        if (mime) imgMap.set(e.entryName, { name: basename(e.entryName), mime, buf: e.getData() });
+      }
+      for (const e of zip.getEntries()) {
+        if (!e.isDirectory && e.entryName.toLowerCase().endsWith('.md') && basename(e.entryName).toLowerCase() !== 'readme.md') {
+          const dir = e.entryName.includes('/') ? e.entryName.slice(0, e.entryName.lastIndexOf('/')) : '';
+          docs.push({ name: basename(e.entryName), raw: e.getData().toString('utf-8'), dir, imgMap });
+        }
+      }
+    } else if (lower.endsWith('.md')) {
+      docs.push({ name: file.name, raw: Buffer.from(await file.arrayBuffer()).toString('utf-8'), dir: '', imgMap: new Map() });
+    } else {
+      skippedFiles.push(file.name);
+    }
+  }
+
+  if (docs.length === 0) {
+    error = uploads.length ? '没有可导入的 .md 文件（支持 .md 或含 .md 的 .zip）。' : '请先选择文件。';
+  } else {
+    const existing = await db.select({ slug: posts.slug }).from(posts);
+    const used = new Set(existing.map((r) => r.slug));
+    const items: ResultItem[] = [];
+
+    for (const doc of docs) {
+      const { data, content } = matter(doc.raw);
+      const fromH1 = deriveTitle(content.trim(), doc.name.replace(/\.md$/i, ''));
+      const title = data.title ?? fromH1.title;
+      let body = data.title ? content.trim() : fromH1.body;
+
+      let imgSaved = 0;
+      let imgSkipped = 0;
+      for (const ref of findImageRefs(body)) {
+        const url = await resolveImg(ref.src, doc);
+        if (url) {
+          body = replaceRef(body, ref, url);
+          imgSaved++;
+        } else {
+          imgSkipped++;
+        }
+      }
+
+      let slug = data.slug ? cleanSlug(String(data.slug)) : toSlug(title);
+      const base = slug;
+      let i = 2;
+      while (used.has(slug)) slug = `${base}-${i++}`;
+      used.add(slug);
+
+      const category = formCategory || (doc.dir ? doc.dir.split('/')[0] : '') || '未分类';
+      const draft = data.draft ?? asDraft;
+
+      await db.insert(posts).values({
+        slug,
+        title,
+        description: data.description ?? makeDescription(body),
+        body,
+        category,
+        cover: data.cover ?? null,
+        tags: Array.isArray(data.tags) ? data.tags : [],
+        draft,
+        pubDate: data.pubDate ? new Date(data.pubDate) : new Date(),
+      });
+      items.push({ title, slug, category, imgSaved, imgSkipped, draft });
+    }
+    result = { items, skippedFiles };
+  }
+}
+---
+
+<AdminLayout title="批量导入">
+  <a href="/admin" class="text-sm transition-colors hover:text-[var(--accent)]" style="color: var(--text-muted)">← 返回列表</a>
+  <h1 class="mb-2 mt-3 text-2xl font-bold tracking-tight">批量导入</h1>
+  <p class="mb-8 text-sm leading-relaxed" style="color: var(--text-muted)">
+    上传石墨等导出的 Markdown。可多选 <code>.md</code> 文件，或上传含图片的 <code>.zip</code>（图片会一并入库）。
+    标题取正文首个 <code># 标题</code> 或文件名；slug 由中文标题自动转拼音。
+  </p>
+
+  {error && (
+    <p class="mb-6 rounded-lg px-4 py-2 text-sm" style="background: color-mix(in oklch, #ef4444 15%, transparent); color: #ef4444">{error}</p>
+  )}
+
+  {
+    result && (
+      <div class="mb-8 rounded-2xl border p-6" style="border-color: var(--accent); background: var(--card)">
+        <p class="mb-3 font-semibold">✓ 成功导入 {result.items.length} 篇</p>
+        <ul class="space-y-2 text-sm">
+          {result.items.map((it) => (
+            <li class="flex items-center justify-between gap-3">
+              <a href={`/blog/${it.slug}/`} target="_blank" class="min-w-0 truncate transition-colors hover:text-[var(--accent)]">
+                {it.title}
+              </a>
+              <span class="shrink-0 text-xs" style="color: var(--text-muted)">
+                {it.category}
+                {it.imgSaved > 0 && ` · ${it.imgSaved} 图`}
+                {it.imgSkipped > 0 && ` · ⚠ ${it.imgSkipped} 图跳过`}
+                {it.draft && ' · 草稿'}
+              </span>
+            </li>
+          ))}
+        </ul>
+        {result.skippedFiles.length > 0 && (
+          <p class="mt-3 text-xs" style="color: var(--text-muted)">已忽略非文档文件：{result.skippedFiles.join(', ')}</p>
+        )}
+        <div class="mt-4 flex gap-3 text-sm">
+          <a href="/admin" class="text-[var(--accent)]">去文章列表 →</a>
+        </div>
+      </div>
+    )
+  }
+
+  <form method="POST" enctype="multipart/form-data" class="space-y-5 rounded-2xl border p-6" style="border-color: var(--border); background: var(--card)">
+    <div>
+      <label class="mb-1 block text-sm font-medium">选择文件（可多选 .md / .zip）</label>
+      <input
+        type="file"
+        name="files"
+        multiple
+        accept=".md,.markdown,.zip"
+        required
+        class="block w-full text-sm file:mr-3 file:rounded-lg file:border-0 file:px-4 file:py-2 file:text-white"
+        style="color: var(--text-muted)"
+      />
+    </div>
+
+    <div>
+      <label class="mb-1 block text-sm font-medium">分类（可选）</label>
+      <input
+        name="category"
+        placeholder="留空则用 zip 子文件夹名，或归为「未分类」"
+        class="w-full rounded-lg border bg-transparent px-3 py-2 outline-none focus:border-[var(--accent)]"
+        style="border-color: var(--border)"
+      />
+    </div>
+
+    <label class="flex items-center gap-2 text-sm">
+      <input type="checkbox" name="draft" />
+      先存为草稿（导入后逐篇审核再发布）
+    </label>
+
+    <button type="submit" class="rounded-lg px-5 py-2.5 font-medium text-white transition-transform hover:-translate-y-0.5" style="background: var(--accent)">
+      开始导入
+    </button>
+  </form>
+
+  <style>
+    input[type='file']::file-selector-button {
+      background: var(--accent);
+      cursor: pointer;
+    }
+  </style>
+</AdminLayout>
