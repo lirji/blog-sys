@@ -1,0 +1,36 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getPublishedPosts } from '../../lib/posts';
+
+const posts = await getPublishedPosts();
+const counts = new Map<string, number>();
+for (const post of posts) {
+  for (const tag of post.data.tags) {
+    counts.set(tag, (counts.get(tag) ?? 0) + 1);
+  }
+}
+const tags = [...counts.entries()].sort((a, b) => b[1] - a[1]);
+---
+
+<BaseLayout title="标签">
+  <div class="mb-10">
+    <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">标签</h1>
+    <p class="mt-2" style="color: var(--text-muted)">按主题浏览文章。</p>
+  </div>
+
+  <div class="flex flex-wrap gap-3">
+    {
+      tags.map(([tag, count]) => (
+        <a
+          href={`/tags/${tag}/`}
+          class="rounded-full border px-4 py-2 text-sm transition-all hover:-translate-y-0.5 hover:text-[var(--accent)]"
+          style="border-color: var(--border); background: var(--card)"
+          onmouseover="this.style.borderColor='var(--accent)'"
+          onmouseout="this.style.borderColor='var(--border)'"
+        >
+          #{tag} <span style="color: var(--text-muted)">{count}</span>
+        </a>
+      ))
+    }
+  </div>
+</BaseLayout>

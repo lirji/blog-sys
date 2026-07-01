@@ -1,0 +1,25 @@
+---
+import PostLayout from '../../layouts/PostLayout.astro';
+import { getPostBySlug, getCategory } from '../../lib/posts';
+import { renderMarkdown } from '../../lib/markdown';
+
+const { slug } = Astro.params;
+const post = slug ? await getPostBySlug(slug) : null;
+if (!post || post.data.draft) {
+  return new Response(null, { status: 404, statusText: 'Not Found' });
+}
+const { html, headings } = renderMarkdown(post.body);
+---
+
+<PostLayout
+  title={post.data.title}
+  description={post.data.description}
+  pubDate={post.data.pubDate}
+  updatedDate={post.data.updatedDate ?? undefined}
+  tags={post.data.tags}
+  cover={post.data.cover ?? undefined}
+  category={getCategory(post)}
+  headings={headings}
+>
+  <Fragment set:html={html} />
+</PostLayout>

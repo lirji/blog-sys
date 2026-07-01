@@ -1,0 +1,36 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PostCard from '../../components/PostCard.astro';
+import { getPublishedPosts, postHref, getCategory } from '../../lib/posts';
+
+const { category } = Astro.params;
+const posts = (await getPublishedPosts()).filter((p) => getCategory(p) === category);
+---
+
+<BaseLayout title={category}>
+  <div class="mb-10">
+    <a href="/categories" class="text-sm transition-colors hover:text-[var(--accent)]" style="color: var(--text-muted)">
+      ← 所有分类
+    </a>
+    <h1 class="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
+      <span style="color: var(--accent)">{category}</span>
+    </h1>
+    <p class="mt-2" style="color: var(--text-muted)">共 {posts.length} 篇。</p>
+  </div>
+
+  <div class="grid gap-4">
+    {
+      posts.map((post) => (
+        <PostCard
+          href={postHref(post)}
+          title={post.data.title}
+          description={post.data.description}
+          pubDate={post.data.pubDate}
+          tags={post.data.tags}
+          cover={post.data.cover ?? undefined}
+          category={getCategory(post)}
+        />
+      ))
+    }
+  </div>
+</BaseLayout>

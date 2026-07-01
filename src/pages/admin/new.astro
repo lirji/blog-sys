@@ -1,0 +1,25 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import AdminForm from '../../components/AdminForm.astro';
+import { createPost, getPostBySlug, parsePostForm } from '../../lib/posts';
+
+let error = '';
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const { values, error: parseError } = parsePostForm(form);
+  if (parseError) {
+    error = parseError;
+  } else if (await getPostBySlug(values!.slug)) {
+    error = `Slug「${values!.slug}」已存在，换一个。`;
+  } else {
+    await createPost(values!);
+    return Astro.redirect('/admin');
+  }
+}
+---
+
+<AdminLayout title="新建文章">
+  <a href="/admin" class="text-sm transition-colors hover:text-[var(--accent)]" style="color: var(--text-muted)">← 返回列表</a>
+  <h1 class="mb-8 mt-3 text-2xl font-bold tracking-tight">新建文章</h1>
+  <AdminForm submitLabel="创建" error={error} />
+</AdminLayout>

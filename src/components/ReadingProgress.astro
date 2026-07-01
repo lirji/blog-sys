@@ -1,0 +1,25 @@
+---
+// 顶部阅读进度条
+---
+
+<div id="reading-progress"></div>
+
+<script>
+  function setupProgress() {
+    const bar = document.getElementById('reading-progress');
+    if (!bar) return;
+    const onScroll = () => {
+      const h = document.documentElement;
+      const max = h.scrollHeight - h.clientHeight;
+      const pct = max > 0 ? (h.scrollTop / max) * 100 : 0;
+      bar.style.width = pct + '%';
+    };
+    // 避免重复绑定
+    window.removeEventListener('scroll', (window as any).__progressHandler);
+    (window as any).__progressHandler = onScroll;
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  }
+  setupProgress();
+  document.addEventListener('astro:after-swap', setupProgress);
+</script>

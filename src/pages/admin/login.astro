@@ -1,0 +1,44 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+
+let error = '';
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const pw = String(form.get('password') ?? '');
+  if (pw && pw === import.meta.env.ADMIN_PASSWORD) {
+    Astro.cookies.set('session', import.meta.env.ADMIN_SECRET, {
+      httpOnly: true,
+      path: '/',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7,
+    });
+    return Astro.redirect('/admin');
+  }
+  error = '口令不正确';
+}
+---
+
+<AdminLayout title="登录" showNav={false}>
+  <div class="mx-auto mt-16 max-w-sm">
+    <h1 class="mb-6 text-2xl font-bold tracking-tight">管理后台登录</h1>
+    <form method="POST" class="space-y-4">
+      <input
+        type="password"
+        name="password"
+        placeholder="管理口令"
+        autofocus
+        class="w-full rounded-lg border bg-transparent px-4 py-2.5 outline-none focus:border-[var(--accent)]"
+        style="border-color: var(--border)"
+      />
+      {error && <p class="text-sm" style="color: #ef4444">{error}</p>}
+      <button
+        type="submit"
+        class="w-full rounded-lg px-4 py-2.5 font-medium text-white transition-transform hover:-translate-y-0.5"
+        style="background: var(--accent)"
+      >
+        登录
+      </button>
+    </form>
+    <p class="mt-4 text-xs" style="color: var(--text-muted)">口令在 .env 的 ADMIN_PASSWORD 中设置。</p>
+  </div>
+</AdminLayout>

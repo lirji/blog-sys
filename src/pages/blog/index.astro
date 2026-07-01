@@ -1,0 +1,30 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PostCard from '../../components/PostCard.astro';
+import { getPublishedPosts, postHref, getCategory } from '../../lib/posts';
+
+const posts = await getPublishedPosts();
+---
+
+<BaseLayout title="文章">
+  <div class="mb-10">
+    <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">全部文章</h1>
+    <p class="mt-2" style="color: var(--text-muted)">共 {posts.length} 篇。</p>
+  </div>
+
+  <div class="grid gap-4">
+    {
+      posts.map((post) => (
+        <PostCard
+          href={postHref(post)}
+          title={post.data.title}
+          description={post.data.description}
+          pubDate={post.data.pubDate}
+          tags={post.data.tags}
+          cover={post.data.cover}
+          category={getCategory(post)}
+        />
+      ))
+    }
+  </div>
+</BaseLayout>

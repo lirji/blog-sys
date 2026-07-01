@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 525" width="1200" height="525">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6d5ae0" />
+      <stop offset="0.5" stop-color="#8b5cf6" />
+      <stop offset="1" stop-color="#22d3ee" />
+    </linearGradient>
+    <radialGradient id="glow" cx="0.7" cy="0.3" r="0.8">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.35" />
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="525" fill="url(#g)" />
+  <rect width="1200" height="525" fill="url(#glow)" />
+  <g fill="none" stroke="#ffffff" stroke-opacity="0.18" stroke-width="1.5">
+    <circle cx="240" cy="410" r="120" />
+    <circle cx="240" cy="410" r="200" />
+    <circle cx="960" cy="120" r="90" />
+    <circle cx="960" cy="120" r="160" />
+  </g>
+  <text x="80" y="300" font-family="ui-sans-serif, system-ui, sans-serif" font-size="72" font-weight="700" fill="#ffffff">Hello, World</text>
+</svg>

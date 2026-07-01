@@ -1,0 +1,36 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import AdminForm from '../../../components/AdminForm.astro';
+import { getPostById, getPostBySlug, updatePost, parsePostForm } from '../../../lib/posts';
+
+const id = Number(Astro.params.id);
+let post = Number.isFinite(id) ? await getPostById(id) : null;
+if (!post) {
+  return new Response(null, { status: 404, statusText: 'Not Found' });
+}
+
+let error = '';
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const { values, error: parseError } = parsePostForm(form);
+  if (parseError) {
+    error = parseError;
+  } else {
+    const conflict = await getPostBySlug(values!.slug);
+    if (conflict && conflict.id !== id) {
+      error = `Slug「${values!.slug}」已被其他文章占用。`;
+    } else {
+      await updatePost(id, { ...values!, updatedDate: new Date() });
+      return Astro.redirect('/admin');
+    }
+  }
+  // 提交失败时，用刚填的内容回显
+  post = { ...post, slug: values?.slug ?? post.slug, body: values?.body ?? post.body, data: { ...post.data, ...(values ?? {}) } };
+}
+---
+
+<AdminLayout title="编辑文章">
+  <a href="/admin" class="text-sm transition-colors hover:text-[var(--accent)]" style="color: var(--text-muted)">← 返回列表</a>
+  <h1 class="mb-8 mt-3 text-2xl font-bold tracking-tight">编辑文章</h1>
+  <AdminForm post={post} submitLabel="保存修改" error={error} />
+</AdminLayout>

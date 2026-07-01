@@ -1,0 +1,31 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SOCIAL_LINKS } from '../consts';
+---
+
+<BaseLayout title="关于">
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">关于我</h1>
+  </div>
+
+  <div class="prose prose-lg max-w-none">
+    <p>你好，我是李睿君，一名后端工程师，主要玩 Java / Spring 全家桶，也在折腾 Flink、规则引擎和推荐系统。</p>
+    <p>这个博客是我沉淀技术笔记和想法的地方。相信<strong>简单</strong>是一种奢侈品，无论写代码还是做产品。</p>
+
+    <h2>你会在这里看到</h2>
+    <ul>
+      <li>后端工程实践：并发、事务、一致性</li>
+      <li>系统设计与架构取舍</li>
+      <li>一些不太正经的随笔</li>
+    </ul>
+
+    <h2>联系我</h2>
+    <ul>
+      {SOCIAL_LINKS.map((link) => (
+        <li>
+          <a href={link.href} target="_blank" rel="noopener">{link.label}</a>
+        </li>
+      ))}
+    </ul>
+  </div>
+</BaseLayout>

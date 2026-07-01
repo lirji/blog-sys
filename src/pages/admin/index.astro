@@ -1,0 +1,72 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { getAllPosts, deletePost } from '../../lib/posts';
+
+// 删除
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  if (form.get('_action') === 'delete') {
+    const id = Number(form.get('id'));
+    if (id) await deletePost(id);
+  }
+  return Astro.redirect('/admin');
+}
+
+const posts = await getAllPosts();
+const fmt = (d: Date) => new Date(d).toISOString().slice(0, 10);
+---
+
+<AdminLayout title="文章列表">
+  <div class="mb-8 flex items-center justify-between">
+    <h1 class="text-2xl font-bold tracking-tight">文章（{posts.length}）</h1>
+    <a
+      href="/admin/new"
+      class="rounded-lg px-4 py-2 text-sm font-medium text-white transition-transform hover:-translate-y-0.5"
+      style="background: var(--accent)"
+    >
+      + 新建文章
+    </a>
+  </div>
+
+  <div class="overflow-hidden rounded-xl border" style="border-color: var(--border)">
+    {
+      posts.length === 0 ? (
+        <p class="p-6 text-sm" style="color: var(--text-muted)">还没有文章，点右上角新建一篇。</p>
+      ) : (
+        posts.map((post) => (
+          <div
+            class="flex items-center justify-between gap-4 border-b px-5 py-4 last:border-b-0"
+            style="border-color: var(--border)"
+          >
+            <div class="min-w-0">
+              <div class="flex items-center gap-2">
+                <a href={`/admin/edit/${post.id}`} class="truncate font-medium transition-colors hover:text-[var(--accent)]">
+                  {post.data.title}
+                </a>
+                {post.data.draft && (
+                  <span class="rounded px-1.5 py-0.5 text-xs" style="background: var(--bg-soft); color: var(--text-muted)">
+                    草稿
+                  </span>
+                )}
+              </div>
+              <p class="mt-0.5 text-xs" style="color: var(--text-muted)">
+                {post.data.category} · {fmt(post.data.pubDate)} · /blog/{post.slug}
+              </p>
+            </div>
+            <div class="flex shrink-0 items-center gap-3 text-sm">
+              <a href={`/blog/${post.slug}/`} target="_blank" style="color: var(--text-muted)" class="transition-colors hover:text-[var(--accent)]">
+                查看
+              </a>
+              <a href={`/admin/edit/${post.id}`} style="color: var(--accent)">编辑</a>
+              <form method="POST" onsubmit="return confirm('确定删除这篇文章？')">
+                <input type="hidden" name="_action" value="delete" />
+                <input type="hidden" name="id" value={post.id} />
+                <button type="submit" style="color: #ef4444" class="transition-opacity hover:opacity-70">删除</button>
+              </form>
+            </div>
+          </div>
+        ))
+      )
+    }
+  </div>
+</AdminLayout>

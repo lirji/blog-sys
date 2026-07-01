@@ -1,0 +1,52 @@
+---
+import '@fontsource-variable/inter';
+import '../styles/global.css';
+import { SITE_TITLE } from '../consts';
+
+interface Props {
+  title?: string;
+  showNav?: boolean;
+}
+const { title = '后台', showNav = true } = Astro.props;
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title} · {SITE_TITLE} 后台</title>
+    <script is:inline>
+      (() => {
+        const saved = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (saved === 'dark' || (!saved && prefersDark)) document.documentElement.classList.add('dark');
+      })();
+    </script>
+  </head>
+  <body>
+    {
+      showNav && (
+        <header class="border-b" style="border-color: var(--border)">
+          <div class="mx-auto flex h-14 max-w-4xl items-center justify-between px-5">
+            <a href="/admin" class="font-semibold tracking-tight">
+              管理后台
+            </a>
+            <div class="flex items-center gap-4 text-sm" style="color: var(--text-muted)">
+              <a href="/" target="_blank" class="transition-colors hover:text-[var(--accent)]">
+                查看站点 ↗
+              </a>
+              <form method="POST" action="/admin/logout">
+                <button type="submit" class="transition-colors hover:text-[var(--accent)]">退出</button>
+              </form>
+            </div>
+          </div>
+        </header>
+      )
+    }
+    <main class="mx-auto max-w-4xl px-5 py-10">
+      <slot />
+    </main>
+  </body>
+</html>
