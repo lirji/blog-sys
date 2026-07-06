@@ -1,0 +1,41 @@
+---
+// 读者端正文字号切换（小/标准/大），偏好存 localStorage
+---
+
+<div class="reading-fs" role="group" aria-label="阅读字号">
+  <span class="mr-1 text-xs" style="color: var(--text-muted)">字号</span>
+  <button type="button" data-fs="small" aria-label="小字号">A</button>
+  <button type="button" data-fs="normal" aria-label="标准字号">A</button>
+  <button type="button" data-fs="large" aria-label="大字号">A</button>
+</div>
+
+<script>
+  const SIZES: Record<string, string> = {
+    small: '1rem',
+    normal: '1.125rem',
+    large: '1.3125rem',
+  };
+
+  function applyReadingFs(level: string) {
+    const article = document.querySelector<HTMLElement>('.prose');
+    if (article) article.style.fontSize = SIZES[level] ?? SIZES.normal;
+    document.querySelectorAll<HTMLElement>('.reading-fs button').forEach((b) => {
+      b.classList.toggle('active', b.dataset.fs === level);
+    });
+  }
+
+  function initReadingFs() {
+    const saved = localStorage.getItem('reading-fs') || 'normal';
+    applyReadingFs(saved);
+    document.querySelectorAll<HTMLElement>('.reading-fs button').forEach((b) => {
+      b.addEventListener('click', () => {
+        const level = b.dataset.fs || 'normal';
+        localStorage.setItem('reading-fs', level);
+        applyReadingFs(level);
+      });
+    });
+  }
+
+  initReadingFs();
+  document.addEventListener('astro:after-swap', initReadingFs);
+</script>

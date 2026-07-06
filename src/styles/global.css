@@ -54,6 +54,43 @@ body {
   background: color-mix(in oklch, var(--accent) 25%, transparent);
 }
 
+/* 阅读字号控件 */
+.reading-fs {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 2px 6px;
+}
+.reading-fs button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.75rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 0.375rem;
+  line-height: 1;
+  color: var(--text-muted);
+  transition: background-color 0.15s, color 0.15s;
+}
+.reading-fs button:hover {
+  background: var(--bg-soft);
+}
+.reading-fs button.active {
+  background: var(--accent);
+  color: #fff;
+}
+.reading-fs button[data-fs='small'] {
+  font-size: 0.8rem;
+}
+.reading-fs button[data-fs='normal'] {
+  font-size: 0.95rem;
+}
+.reading-fs button[data-fs='large'] {
+  font-size: 1.15rem;
+}
+
 /* 搜索关键词高亮 */
 mark {
   background: color-mix(in oklch, var(--accent) 28%, transparent);

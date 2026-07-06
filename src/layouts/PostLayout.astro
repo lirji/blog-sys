@@ -4,6 +4,7 @@ import FormattedDate from '../components/FormattedDate.astro';
 import TableOfContents from '../components/TableOfContents.astro';
 import ReadingProgress from '../components/ReadingProgress.astro';
 import PostNav from '../components/PostNav.astro';
+import FontSizeControl from '../components/FontSizeControl.astro';
 import type { Post } from '../lib/posts';
 
 interface Heading {
@@ -79,6 +80,10 @@ const {
       }
       {cover && <img src={cover} alt={title} class="cover-img mt-8" />}
     </header>
+
+    <div class="mb-6 flex justify-end border-b pb-4" style="border-color: var(--border)">
+      <FontSizeControl />
+    </div>
 
     <div class="prose prose-lg max-w-none">
       <slot />
