@@ -13,41 +13,37 @@ interface Props {
 const { href, title, description, pubDate, tags = [], cover, category } = Astro.props;
 ---
 
-<a
-  href={href}
-  class="group block overflow-hidden rounded-2xl border transition-all duration-200 hover:-translate-y-0.5"
-  style="border-color: var(--border); background: var(--card)"
-  onmouseover="this.style.borderColor='var(--accent)'"
-  onmouseout="this.style.borderColor='var(--border)'"
->
+<a href={href} class="card card--glow group overflow-hidden">
   {
     cover && (
-      <img
-        src={cover}
-        alt={title}
-        class="h-40 w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
-      />
+      <div class="overflow-hidden">
+        <img
+          src={cover}
+          alt={title}
+          class="h-44 w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.04]"
+        />
+      </div>
     )
   }
   <div class="p-6">
-  <div class="mb-2 flex items-center gap-3 text-xs" style="color: var(--text-muted)">
-    {category && <span class="font-medium" style="color: var(--accent)">{category}</span>}
-    <FormattedDate date={pubDate} />
-    {
-      tags.length > 0 && (
-        <span class="flex gap-2">
-          {tags.slice(0, 3).map((t) => (
-            <span>#{t}</span>
-          ))}
-        </span>
-      )
-    }
-  </div>
-  <h3 class="mb-1.5 text-lg font-semibold tracking-tight transition-colors group-hover:text-[var(--accent)]">
-    {title}
-  </h3>
-  <p class="line-clamp-2 text-sm leading-relaxed" style="color: var(--text-muted)">
-    {description}
-  </p>
+    <div class="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-faint">
+      {category && <span class="chip chip--accent">{category}</span>}
+      <FormattedDate date={pubDate} />
+      {
+        tags.length > 0 && (
+          <span class="flex gap-2">
+            {tags.slice(0, 3).map((t) => (
+              <span>#{t}</span>
+            ))}
+          </span>
+        )
+      }
+    </div>
+    <h3 class="mb-1.5 text-lg font-semibold tracking-tight transition-colors group-hover:text-accent">
+      {title}
+    </h3>
+    <p class="line-clamp-2 text-sm leading-relaxed text-muted">
+      {description}
+    </p>
   </div>
 </a>

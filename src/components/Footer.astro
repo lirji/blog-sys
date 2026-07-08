@@ -3,16 +3,22 @@ import { SITE_AUTHOR, SOCIAL_LINKS } from '../consts';
 const year = new Date().getFullYear();
 ---
 
-<footer class="mt-24 border-t" style="border-color: var(--border)">
+<footer class="mt-24">
+  {/* 顶部渐隐分隔线 */}
   <div
-    class="mx-auto flex max-w-3xl flex-col items-center justify-between gap-4 px-5 py-10 text-sm sm:flex-row"
-    style="color: var(--text-muted)"
+    class="mx-auto max-w-3xl px-5"
+    aria-hidden="true"
+  >
+    <div class="h-px" style="background: linear-gradient(to right, transparent, var(--border-strong), transparent)"></div>
+  </div>
+  <div
+    class="mx-auto flex max-w-3xl flex-col items-center justify-between gap-4 px-5 py-10 text-sm text-muted sm:flex-row"
   >
     <p>© {year} {SITE_AUTHOR}</p>
     <div class="flex items-center gap-4">
       {
         SOCIAL_LINKS.map((link) => (
-          <a href={link.href} class="transition-colors hover:text-[var(--accent)]" target="_blank" rel="noopener">
+          <a href={link.href} class="link-underline" target="_blank" rel="noopener">
             {link.label}
           </a>
         ))

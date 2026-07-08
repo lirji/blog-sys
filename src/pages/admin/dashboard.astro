@@ -18,45 +18,57 @@ const fmtTime = (d: Date) =>
   });
 
 const stats = [
-  { label: '文章总数', value: s.totalPosts, sub: `${s.published} 已发布 · ${s.drafts} 草稿` },
-  { label: '总浏览量', value: s.totalViews, sub: '所有文章累计' },
-  { label: '独立访客', value: s.uniqueVisitors, sub: '按 IP 去重' },
-  { label: '图片', value: s.totalImages, sub: '存于数据库' },
+  { icon: '📝', label: '文章总数', value: s.totalPosts, sub: `${s.published} 已发布 · ${s.drafts} 草稿` },
+  { icon: '👁', label: '总浏览量', value: s.totalViews, sub: '所有文章累计' },
+  { icon: '👤', label: '独立访客', value: s.uniqueVisitors, sub: '按 IP 去重' },
+  { icon: '🖼', label: '图片', value: s.totalImages, sub: '存于数据库' },
 ];
 ---
 
 <AdminLayout title="数据看板">
-  <h1 class="mb-6 text-2xl font-bold tracking-tight">数据看板</h1>
+  <h1 class="reveal mb-6 text-2xl font-bold tracking-tight text-fg" style="--i:0">数据看板</h1>
 
   {/* 概览卡片 */}
   <div class="grid grid-cols-2 gap-4 lg:grid-cols-4">
     {
-      stats.map((c) => (
-        <div class="rounded-2xl border p-5" style="border-color: var(--border); background: var(--card)">
-          <p class="text-sm" style="color: var(--text-muted)">{c.label}</p>
-          <p class="mt-1 text-3xl font-bold tracking-tight" style="color: var(--accent)">{c.value}</p>
-          <p class="mt-1 text-xs" style="color: var(--text-muted)">{c.sub}</p>
+      stats.map((c, i) => (
+        <div class="card reveal overflow-hidden p-5" style={`--i:${i}`}>
+          {/* 顶部细 accent 条 */}
+          <span class="absolute inset-x-0 top-0 h-0.5" style="background: linear-gradient(90deg, var(--accent), transparent)" aria-hidden="true" />
+          <div class="flex items-center justify-between">
+            <p class="text-sm text-muted">{c.label}</p>
+            <span
+              class="grid h-8 w-8 place-items-center rounded-lg text-base"
+              style="background: var(--accent-soft)"
+              aria-hidden="true"
+            >
+              {c.icon}
+            </span>
+          </div>
+          <p class="mt-2 text-3xl font-bold tracking-tight text-accent">{c.value}</p>
+          <p class="mt-1 text-xs text-faint">{c.sub}</p>
         </div>
       ))
     }
   </div>
 
   {/* 浏览趋势 */}
-  <section class="mt-6 rounded-2xl border p-6" style="border-color: var(--border); background: var(--card)">
+  <section class="admin-panel reveal mt-6 p-6" style="--i:0">
     <div class="mb-4 flex items-center justify-between">
-      <h2 class="font-semibold tracking-tight">📈 浏览趋势</h2>
-      <div class="flex gap-1 text-sm">
+      <h2 class="font-semibold tracking-tight text-fg">📈 浏览趋势</h2>
+      {/* 分段控件：当前区间用 accent 底 + on-accent 文字 */}
+      <div class="inline-flex rounded-full p-1" style="background: var(--bg-soft)">
         <a
           href="/admin/dashboard?days=7"
-          class="rounded-lg px-3 py-1 transition-colors"
-          style={days === 7 ? 'background: var(--accent); color: #fff' : 'color: var(--text-muted)'}
+          class="rounded-full px-3 py-1 text-sm transition-colors"
+          style={days === 7 ? 'background: var(--accent); color: var(--on-accent); box-shadow: var(--shadow-xs)' : 'color: var(--text-muted)'}
         >
           近 7 天
         </a>
         <a
           href="/admin/dashboard?days=30"
-          class="rounded-lg px-3 py-1 transition-colors"
-          style={days === 30 ? 'background: var(--accent); color: #fff' : 'color: var(--text-muted)'}
+          class="rounded-full px-3 py-1 text-sm transition-colors"
+          style={days === 30 ? 'background: var(--accent); color: var(--on-accent); box-shadow: var(--shadow-xs)' : 'color: var(--text-muted)'}
         >
           近 30 天
         </a>
@@ -67,21 +79,24 @@ const stats = [
 
   <div class="mt-6 grid gap-6 lg:grid-cols-2">
     {/* 热门文章 */}
-    <section class="rounded-2xl border p-6" style="border-color: var(--border); background: var(--card)">
-      <h2 class="mb-4 font-semibold tracking-tight">🔥 热门文章</h2>
+    <section class="admin-panel reveal p-6" style="--i:0">
+      <h2 class="mb-4 font-semibold tracking-tight text-fg">🔥 热门文章</h2>
       {
         s.topPosts.length === 0 ? (
-          <p class="text-sm" style="color: var(--text-muted)">暂无数据。</p>
+          <p class="text-sm text-muted">暂无数据。</p>
         ) : (
           <ol class="space-y-1">
             {s.topPosts.map((p, i) => (
               <li>
-                <a href={`/blog/${p.slug}/`} target="_blank" class="group flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-[var(--bg-soft)]">
-                  <span class="w-5 text-center font-bold" style={i < 3 ? 'color: var(--accent)' : 'color: var(--text-muted)'}>
+                <a href={`/blog/${p.slug}/`} target="_blank" class="group flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-bg-soft">
+                  <span
+                    class="grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs font-bold"
+                    style={i < 3 ? 'background: var(--accent-soft); color: var(--accent)' : 'color: var(--text-faint)'}
+                  >
                     {i + 1}
                   </span>
-                  <span class="min-w-0 flex-1 truncate transition-colors group-hover:text-[var(--accent)]">{p.data.title}</span>
-                  <span class="shrink-0 text-xs" style="color: var(--text-muted)">👁 {p.data.views}</span>
+                  <span class="min-w-0 flex-1 truncate transition-colors group-hover:text-accent">{p.data.title}</span>
+                  <span class="shrink-0 text-xs text-faint">👁 {p.data.views}</span>
                 </a>
               </li>
             ))}
@@ -91,18 +106,18 @@ const stats = [
     </section>
 
     {/* 分类分布 */}
-    <section class="rounded-2xl border p-6" style="border-color: var(--border); background: var(--card)">
-      <h2 class="mb-4 font-semibold tracking-tight">📂 分类分布</h2>
+    <section class="admin-panel reveal p-6" style="--i:1">
+      <h2 class="mb-4 font-semibold tracking-tight text-fg">📂 分类分布</h2>
       <div class="space-y-3">
         {
           s.categories.map((c) => (
-            <a href={`/admin?category=${encodeURIComponent(c.category)}`} class="block">
+            <a href={`/admin?category=${encodeURIComponent(c.category)}`} class="group block rounded-lg p-1.5 transition-colors hover:bg-bg-soft">
               <div class="mb-1 flex justify-between text-sm">
-                <span>{c.category}</span>
-                <span style="color: var(--text-muted)">{c.count}</span>
+                <span class="text-fg transition-colors group-hover:text-accent">{c.category}</span>
+                <span class="text-faint">{c.count}</span>
               </div>
               <div class="h-2 overflow-hidden rounded-full" style="background: var(--bg-soft)">
-                <div class="h-full rounded-full" style={`width: ${(c.count / maxCat) * 100}%; background: var(--accent)`} />
+                <div class="bar-fill h-full rounded-full" style={`width: ${(c.count / maxCat) * 100}%; background: var(--accent)`} />
               </div>
             </a>
           ))
@@ -113,21 +128,21 @@ const stats = [
 
   <div class="mt-6 grid gap-6 lg:grid-cols-2">
     {/* 热门标签 */}
-    <section class="rounded-2xl border p-6" style="border-color: var(--border); background: var(--card)">
-      <h2 class="mb-4 font-semibold tracking-tight">🏷 热门标签</h2>
+    <section class="admin-panel reveal p-6" style="--i:0">
+      <h2 class="mb-4 font-semibold tracking-tight text-fg">🏷 热门标签</h2>
       {
         s.topTags.length === 0 ? (
-          <p class="text-sm" style="color: var(--text-muted)">暂无标签。</p>
+          <p class="text-sm text-muted">暂无标签。</p>
         ) : (
           <div class="flex flex-wrap gap-2">
             {s.topTags.map((t) => (
               <a
                 href={`/tags/${t.tag}/`}
                 target="_blank"
-                class="rounded-full border px-3 py-1 text-sm transition-colors hover:text-[var(--accent)]"
-                style={`border-color: var(--border); font-size: ${0.75 + (t.count / maxTag) * 0.4}rem`}
+                class="chip"
+                style={`font-size: ${0.75 + (t.count / maxTag) * 0.4}rem`}
               >
-                #{t.tag} <span style="color: var(--text-muted)">{t.count}</span>
+                #{t.tag} <span class="text-faint">{t.count}</span>
               </a>
             ))}
           </div>
@@ -136,18 +151,18 @@ const stats = [
     </section>
 
     {/* 最近访问 */}
-    <section class="rounded-2xl border p-6" style="border-color: var(--border); background: var(--card)">
-      <h2 class="mb-4 font-semibold tracking-tight">🕑 最近被访问</h2>
+    <section class="admin-panel reveal p-6" style="--i:1">
+      <h2 class="mb-4 font-semibold tracking-tight text-fg">🕑 最近被访问</h2>
       {
         s.recentViewed.length === 0 ? (
-          <p class="text-sm" style="color: var(--text-muted)">还没有访问记录。</p>
+          <p class="text-sm text-muted">还没有访问记录。</p>
         ) : (
           <ul class="space-y-1">
             {s.recentViewed.map((r) => (
               <li>
-                <a href={`/blog/${r.slug}/`} target="_blank" class="group flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-[var(--bg-soft)]">
-                  <span class="min-w-0 flex-1 truncate transition-colors group-hover:text-[var(--accent)]">{r.title}</span>
-                  <span class="shrink-0 text-xs" style="color: var(--text-muted)">{fmtTime(r.viewedAt)}</span>
+                <a href={`/blog/${r.slug}/`} target="_blank" class="group flex items-center gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-bg-soft">
+                  <span class="min-w-0 flex-1 truncate transition-colors group-hover:text-accent">{r.title}</span>
+                  <span class="shrink-0 text-xs text-faint">{fmtTime(r.viewedAt)}</span>
                 </a>
               </li>
             ))}

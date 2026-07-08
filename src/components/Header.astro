@@ -10,31 +10,41 @@ function isActive(href: string) {
 ---
 
 <header
-  class="sticky top-0 z-50 border-b backdrop-blur-md"
-  style="border-color: var(--border); background: color-mix(in oklch, var(--bg) 80%, transparent)"
+  id="site-header"
+  class="sticky top-0 z-50 border-b border-default"
+  style="background: color-mix(in oklch, var(--bg) 72%, transparent); backdrop-filter: blur(12px) saturate(180%); -webkit-backdrop-filter: blur(12px) saturate(180%)"
 >
   <nav class="mx-auto flex h-16 max-w-3xl items-center justify-between px-5">
-    <a href="/" class="text-base font-semibold tracking-tight transition-opacity hover:opacity-70">
-      {SITE_TITLE}
+    <a href="/" class="flex items-center gap-2.5 text-base font-semibold tracking-tight transition-opacity hover:opacity-80">
+      <span
+        class="grid h-7 w-7 place-items-center rounded-md text-sm font-bold"
+        style="background: linear-gradient(135deg, var(--accent), oklch(0.62 0.17 320)); color: var(--on-accent)"
+        aria-hidden="true"
+      >李</span>
+      <span>{SITE_TITLE}</span>
     </a>
     <div class="flex items-center gap-1 sm:gap-2">
       {
         NAV_LINKS.map((link) => (
           <a
             href={link.href}
-            class="rounded-lg px-3 py-1.5 text-sm transition-colors hover:bg-[var(--bg-soft)]"
-            style={isActive(link.href) ? 'color: var(--accent); font-weight: 600' : 'color: var(--text-muted)'}
+            class:list={[
+              'relative rounded-lg px-3 py-1.5 text-sm transition-colors',
+              isActive(link.href) ? 'font-semibold text-accent' : 'text-muted hover:text-fg',
+            ]}
           >
             {link.label}
+            {isActive(link.href) && (
+              <span
+                class="absolute inset-x-3 -bottom-px h-0.5 rounded-full"
+                style="background: var(--accent)"
+                aria-hidden="true"
+              />
+            )}
           </a>
         ))
       }
-      <a
-        href="/search"
-        aria-label="搜索"
-        class="inline-flex h-9 w-9 items-center justify-center rounded-lg border transition-colors hover:bg-[var(--bg-soft)]"
-        style="border-color: var(--border)"
-      >
+      <a href="/search" aria-label="搜索" class="icon-btn">
         <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7">
           <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.35-4.35M17 10.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z" />
         </svg>
@@ -43,3 +53,20 @@ function isActive(href: string) {
     </div>
   </nav>
 </header>
+
+<script>
+  // 滚动后给导航栏加阴影 / 加深边框
+  function setupHeaderScroll() {
+    const header = document.getElementById('site-header');
+    if (!header) return;
+    const onScroll = () => {
+      header.classList.toggle('scrolled', window.scrollY > 8);
+    };
+    window.removeEventListener('scroll', (window as any).__headerScroll);
+    (window as any).__headerScroll = onScroll;
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  }
+  setupHeaderScroll();
+  document.addEventListener('astro:after-swap', setupHeaderScroll);
+</script>

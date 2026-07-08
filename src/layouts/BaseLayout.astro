@@ -41,6 +41,16 @@ const pageTitle = title ? `${title} · ${SITE_TITLE}` : SITE_TITLE;
     </script>
 
     <ClientRouter />
+
+    {/* 无 JS 兜底：直接显示 reveal 内容，避免动画依赖导致内容不可见 */}
+    <noscript>
+      <style>
+        .reveal {
+          opacity: 1 !important;
+          transform: none !important;
+        }
+      </style>
+    </noscript>
   </head>
   <body>
     <Header />
@@ -48,5 +58,27 @@ const pageTitle = title ? `${title} · ${SITE_TITLE}` : SITE_TITLE;
       <slot />
     </main>
     <Footer />
+
+    {/* 进入视口时逐个揭示（stagger reveal），兼容 View Transitions 换页 */}
+    <script>
+      function setupReveal() {
+        const els = document.querySelectorAll('.reveal:not(.is-visible)');
+        if (!els.length) return;
+        const io = new IntersectionObserver(
+          (entries, obs) => {
+            entries.forEach((e) => {
+              if (e.isIntersecting) {
+                e.target.classList.add('is-visible');
+                obs.unobserve(e.target);
+              }
+            });
+          },
+          { rootMargin: '0px 0px -10% 0px' }
+        );
+        els.forEach((el) => io.observe(el));
+      }
+      setupReveal();
+      document.addEventListener('astro:after-swap', setupReveal);
+    </script>
   </body>
 </html>

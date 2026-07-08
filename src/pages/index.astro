@@ -9,50 +9,58 @@ const popular = await getPopularPosts(5);
 ---
 
 <BaseLayout>
-  <section class="pt-8 pb-16 sm:pt-16">
-    <h1 class="text-4xl font-bold tracking-tight sm:text-5xl">
-      你好，我是<span style="color: var(--accent)">李睿君</span> 👋
-    </h1>
-    <p class="mt-5 max-w-xl text-lg leading-relaxed" style="color: var(--text-muted)">
-      {SITE_DESCRIPTION}这里是我沉淀想法的角落，聊后端工程、系统设计，偶尔也写点随笔。
-    </p>
-    <div class="mt-8 flex gap-3">
-      <a
-        href="/blog"
-        class="rounded-xl px-5 py-2.5 text-sm font-medium text-white transition-transform hover:-translate-y-0.5"
-        style="background: var(--accent)"
-      >
-        浏览文章
-      </a>
-      <a
-        href="/about"
-        class="rounded-xl border px-5 py-2.5 text-sm font-medium transition-colors hover:bg-[var(--bg-soft)]"
-        style="border-color: var(--border)"
-      >
-        关于我
-      </a>
+  <section class="hero pt-8 pb-16 sm:pt-16">
+    <div class="flex items-center justify-between gap-8">
+      <div class="min-w-0">
+        {/* 状态胶囊 */}
+        <div
+          class="mb-5 inline-flex items-center gap-2 rounded-full border border-default px-3 py-1 text-xs text-muted backdrop-blur-sm"
+          style="background: color-mix(in oklch, var(--card) 60%, transparent)"
+        >
+          <span class="ping-dot"></span>
+          后端工程 · 系统设计 · 随笔
+        </div>
+        <h1 class="text-4xl font-bold leading-[1.1] tracking-tight sm:text-6xl">
+          你好，我是<span class="text-gradient">李睿君</span> 👋
+        </h1>
+        <p class="mt-5 max-w-xl text-lg leading-relaxed text-muted">
+          {SITE_DESCRIPTION}这里是我沉淀想法的角落，聊后端工程、系统设计，偶尔也写点随笔。
+        </p>
+        <div class="mt-8 flex flex-wrap gap-3">
+          <a href="/blog" class="btn btn--primary">
+            浏览文章 <span class="arrow">→</span>
+          </a>
+          <a href="/about" class="btn btn--ghost">关于我</a>
+        </div>
+      </div>
+      {/* 右侧 monogram，仅桌面显示 */}
+      <div class="hidden shrink-0 sm:block">
+        <div class="monogram h-28 w-28 text-5xl">李</div>
+      </div>
     </div>
   </section>
 
   <section>
     <div class="mb-6 flex items-baseline justify-between">
       <h2 class="text-xl font-semibold tracking-tight">最近的文章</h2>
-      <a href="/blog" class="text-sm transition-colors hover:text-[var(--accent)]" style="color: var(--text-muted)">
-        全部 →
+      <a href="/blog" class="group link-underline inline-flex items-center gap-1 text-sm text-muted">
+        全部 <span class="arrow arrow--right">→</span>
       </a>
     </div>
     <div class="grid gap-4 sm:grid-cols-2">
       {
-        posts.map((post) => (
-          <PostCard
-            href={postHref(post)}
-            title={post.data.title}
-            description={post.data.description}
-            pubDate={post.data.pubDate}
-            tags={post.data.tags}
-            cover={post.data.cover}
-            category={getCategory(post)}
-          />
+        posts.map((post, i) => (
+          <div class="reveal" style={`--i:${i}`}>
+            <PostCard
+              href={postHref(post)}
+              title={post.data.title}
+              description={post.data.description}
+              pubDate={post.data.pubDate}
+              tags={post.data.tags}
+              cover={post.data.cover}
+              category={getCategory(post)}
+            />
+          </div>
         ))
       }
     </div>
@@ -62,26 +70,29 @@ const popular = await getPopularPosts(5);
     popular.length > 0 && (
       <section class="mt-16">
         <h2 class="mb-6 text-xl font-semibold tracking-tight">🔥 热门文章</h2>
-        <ol class="overflow-hidden rounded-2xl border" style="border-color: var(--border); background: var(--card)">
+        <ol
+          class="overflow-hidden rounded-xl border border-default"
+          style="background: var(--card); box-shadow: var(--shadow-sm)"
+        >
           {popular.map((post, i) => (
             <li>
               <a
                 href={postHref(post)}
-                class="group flex items-center gap-4 border-b px-5 py-3.5 last:border-b-0 transition-colors hover:bg-[var(--bg-soft)]"
-                style="border-color: var(--border)"
+                class="group flex items-center gap-4 border-b border-default px-5 py-4 last:border-b-0 transition-colors hover:bg-[var(--bg-soft)]"
               >
                 <span
-                  class="w-6 shrink-0 text-center text-lg font-bold"
-                  style={i < 3 ? 'color: var(--accent)' : 'color: var(--text-muted)'}
+                  class:list={[
+                    'grid h-7 w-7 shrink-0 place-items-center rounded-full text-sm font-bold transition-transform group-hover:scale-110',
+                    i < 3 ? 'text-accent' : 'text-faint',
+                  ]}
+                  style={i < 3 ? 'background: var(--accent-soft)' : ''}
                 >
                   {i + 1}
                 </span>
-                <span class="min-w-0 flex-1 truncate font-medium transition-colors group-hover:text-[var(--accent)]">
+                <span class="min-w-0 flex-1 truncate font-medium transition-colors group-hover:text-accent">
                   {post.data.title}
                 </span>
-                <span class="shrink-0 text-xs" style="color: var(--text-muted)">
-                  👁 {post.data.views}
-                </span>
+                <span class="shrink-0 text-xs text-faint">👁 {post.data.views}</span>
               </a>
             </li>
           ))}

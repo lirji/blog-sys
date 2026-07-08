@@ -14,20 +14,29 @@ const results = q ? await searchPosts(q) : [];
   </div>
 
   <form method="GET" action="/search" class="mb-8">
-    <input
-      type="search"
-      name="q"
-      value={q}
-      placeholder="输入关键词，回车搜索…"
-      autofocus
-      class="w-full rounded-xl border bg-transparent px-4 py-3 outline-none focus:border-[var(--accent)]"
-      style="border-color: var(--border)"
-    />
+    <div class="relative">
+      <svg
+        class="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-faint"
+        fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7"
+        aria-hidden="true"
+      >
+        <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.35-4.35M17 10.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z" />
+      </svg>
+      <input
+        type="search"
+        name="q"
+        value={q}
+        placeholder="输入关键词，回车搜索…"
+        autofocus
+        class="search-input w-full rounded-lg border border-default py-3 pl-11 pr-4 text-fg outline-none"
+        style="background: var(--card)"
+      />
+    </div>
   </form>
 
   {
     q && (
-      <p class="mb-6 text-sm" style="color: var(--text-muted)">
+      <p class="mb-6 text-sm text-faint">
         关键词「{q}」找到 {results.length} 篇。
       </p>
     )
@@ -35,34 +44,37 @@ const results = q ? await searchPosts(q) : [];
 
   <div class="grid gap-4">
     {
-      results.map((post) => (
-        <a
-          href={postHref(post)}
-          class="group block rounded-2xl border p-6 transition-all duration-200 hover:-translate-y-0.5"
-          style="border-color: var(--border); background: var(--card)"
-          onmouseover="this.style.borderColor='var(--accent)'"
-          onmouseout="this.style.borderColor='var(--border)'"
-        >
-          <div class="mb-2 flex items-center gap-3 text-xs" style="color: var(--text-muted)">
-            <span class="font-medium" style="color: var(--accent)">{getCategory(post)}</span>
-            <FormattedDate date={post.data.pubDate} />
-          </div>
-          <h3
-            class="mb-1.5 text-lg font-semibold tracking-tight transition-colors group-hover:text-[var(--accent)]"
-            set:html={highlight(post.data.title, q)}
-          />
-          <p class="text-sm leading-relaxed" style="color: var(--text-muted)" set:html={highlight(post.data.description, q)} />
-          <p class="mt-2 text-sm leading-relaxed" style="color: var(--text-muted)" set:html={snippet(post.body, q)} />
-        </a>
+      results.map((post, i) => (
+        <div class="reveal" style={`--i:${Math.min(i, 8)}`}>
+          <a href={postHref(post)} class="card group block p-6">
+            <div class="mb-2 flex items-center gap-3 text-xs text-faint">
+              <span class="chip chip--accent">{getCategory(post)}</span>
+              <FormattedDate date={post.data.pubDate} />
+            </div>
+            <h3
+              class="mb-1.5 text-lg font-semibold tracking-tight transition-colors group-hover:text-accent"
+              set:html={highlight(post.data.title, q)}
+            />
+            <p class="text-sm leading-relaxed text-muted" set:html={highlight(post.data.description, q)} />
+            <p class="mt-2 text-sm leading-relaxed text-muted" set:html={snippet(post.body, q)} />
+          </a>
+        </div>
       ))
     }
   </div>
 
   {
     q && results.length === 0 && (
-      <p class="py-12 text-center" style="color: var(--text-muted)">
-        没有匹配的文章，换个词试试。
-      </p>
+      <div class="py-16 text-center">
+        <svg
+          class="mx-auto h-12 w-12 text-faint opacity-60"
+          fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.4"
+          aria-hidden="true"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.35-4.35M17 10.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z" />
+        </svg>
+        <p class="mt-4 text-muted">没有匹配「{q}」的文章，换个词试试。</p>
+      </div>
     )
   }
 </BaseLayout>

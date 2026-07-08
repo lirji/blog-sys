@@ -9,62 +9,71 @@ interface Props {
 const { post = null, submitLabel, error = '' } = Astro.props;
 const d = post?.data;
 const dateValue = d?.pubDate ? new Date(d.pubDate).toISOString().slice(0, 10) : '';
-const inputCls =
-  'w-full rounded-lg border bg-transparent px-3 py-2 outline-none focus:border-[var(--accent)]';
+// 统一表单控件样式（圆角 + 边框 + 聚焦 accent 光环），见 global.css 的 .admin-input。
+// 注意：套用 .admin-input 的元素不要再写内联 border-color，否则会盖过聚焦描边。
+const inputCls = 'admin-input';
 ---
 
 <form method="POST" class="space-y-5">
   {error && (
-    <p class="rounded-lg px-4 py-2 text-sm" style="background: color-mix(in oklch, #ef4444 15%, transparent); color: #ef4444">{error}</p>
+    <p
+      class="flex items-center gap-2 rounded-md px-4 py-2.5 text-sm"
+      style="background: color-mix(in oklch, #ef4444 14%, transparent); color: #ef4444"
+    >
+      <svg class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0 3.75h.008M10.34 3.94 1.94 18a1.5 1.5 0 0 0 1.3 2.25h17.52a1.5 1.5 0 0 0 1.3-2.25L13.66 3.94a1.5 1.5 0 0 0-2.6 0Z" />
+      </svg>
+      {error}
+    </p>
   )}
 
   <div>
-    <label class="mb-1 block text-sm font-medium">标题 *</label>
-    <input name="title" value={d?.title ?? ''} required class={inputCls} style="border-color: var(--border)" />
+    <label class="mb-1.5 block text-sm font-medium text-fg">标题 *</label>
+    <input name="title" value={d?.title ?? ''} required class={inputCls} />
   </div>
 
   <div class="grid gap-5 sm:grid-cols-2">
     <div>
-      <label class="mb-1 block text-sm font-medium">Slug（URL） *</label>
-      <input name="slug" value={post?.slug ?? ''} required placeholder="my-post" class={inputCls} style="border-color: var(--border)" />
+      <label class="mb-1.5 block text-sm font-medium text-fg">Slug（URL） *</label>
+      <input name="slug" value={post?.slug ?? ''} required placeholder="my-post" class={inputCls} />
     </div>
     <div>
-      <label class="mb-1 block text-sm font-medium">分类</label>
-      <input name="category" value={d?.category ?? ''} placeholder="随笔" class={inputCls} style="border-color: var(--border)" />
+      <label class="mb-1.5 block text-sm font-medium text-fg">分类</label>
+      <input name="category" value={d?.category ?? ''} placeholder="随笔" class={inputCls} />
     </div>
   </div>
 
   <div class="grid gap-5 sm:grid-cols-2">
     <div>
-      <label class="mb-1 block text-sm font-medium">标签（逗号分隔）</label>
-      <input name="tags" value={d?.tags?.join(', ') ?? ''} placeholder="后端, 分布式" class={inputCls} style="border-color: var(--border)" />
+      <label class="mb-1.5 block text-sm font-medium text-fg">标签（逗号分隔）</label>
+      <input name="tags" value={d?.tags?.join(', ') ?? ''} placeholder="后端, 分布式" class={inputCls} />
     </div>
     <div>
-      <label class="mb-1 block text-sm font-medium">发布日期</label>
-      <input type="date" name="pubDate" value={dateValue} class={inputCls} style="border-color: var(--border)" />
+      <label class="mb-1.5 block text-sm font-medium text-fg">发布日期</label>
+      <input type="date" name="pubDate" value={dateValue} class={inputCls} />
     </div>
   </div>
 
   <div>
-    <label class="mb-1 block text-sm font-medium">封面图（可选）</label>
+    <label class="mb-1.5 block text-sm font-medium text-fg">封面图（可选）</label>
     <div class="flex gap-2">
-      <input id="cover-input" name="cover" value={d?.cover ?? ''} placeholder="/media/1 或直接上传" class={inputCls} style="border-color: var(--border)" />
-      <button type="button" id="cover-upload-btn" class="shrink-0 rounded-lg border px-4 text-sm transition-colors hover:bg-[var(--bg-soft)]" style="border-color: var(--border)">上传</button>
+      <input id="cover-input" name="cover" value={d?.cover ?? ''} placeholder="/media/1 或直接上传" class={inputCls} />
+      <button type="button" id="cover-upload-btn" class="btn btn--ghost btn--sm shrink-0">上传</button>
       <input type="file" id="cover-file" accept="image/*" class="hidden" />
     </div>
   </div>
 
   <div>
-    <label class="mb-1 block text-sm font-medium">摘要</label>
-    <textarea name="description" rows="2" class={inputCls} style="border-color: var(--border)">{d?.description ?? ''}</textarea>
+    <label class="mb-1.5 block text-sm font-medium text-fg">摘要</label>
+    <textarea name="description" rows="2" class={inputCls}>{d?.description ?? ''}</textarea>
   </div>
 
   <div>
-    <div class="mb-1 flex items-center justify-between">
-      <label class="block text-sm font-medium">正文（Markdown）</label>
-      <div class="flex items-center gap-3 text-xs" style="color: var(--text-muted)">
-        <button type="button" id="body-upload-btn" class="rounded border px-2 py-1 transition-colors hover:bg-[var(--bg-soft)]" style="border-color: var(--border)">🖼 插入图片</button>
-        <span>也可直接把图片拖入 / 粘贴到编辑区</span>
+    <div class="mb-1.5 flex items-center justify-between">
+      <label class="block text-sm font-medium text-fg">正文（Markdown）</label>
+      <div class="flex items-center gap-3 text-xs text-faint">
+        <button type="button" id="body-upload-btn" class="btn btn--ghost btn--sm">🖼 插入图片</button>
+        <span class="hidden sm:inline">也可直接把图片拖入 / 粘贴到编辑区</span>
       </div>
     </div>
     <input type="file" id="body-file" accept="image/*" class="hidden" />
@@ -74,29 +83,24 @@ const inputCls =
         name="body"
         rows="22"
         class={`${inputCls} font-mono text-sm`}
-        style="border-color: var(--border)"
         spellcheck="false">{post?.body ?? ''}</textarea>
       <div
         id="body-preview"
-        class="prose max-w-none overflow-auto rounded-lg border p-4"
-        style="border-color: var(--border); background: var(--bg-soft); max-height: 40rem"
+        class="prose max-w-none overflow-auto border border-default p-4"
+        style="border-radius: var(--rad-md); background: var(--bg-soft); max-height: 40rem"
       >
       </div>
     </div>
   </div>
 
-  <label class="flex items-center gap-2 text-sm">
-    <input type="checkbox" name="draft" checked={d?.draft ?? false} />
+  <label class="flex items-center gap-2 text-sm text-fg">
+    <input type="checkbox" name="draft" checked={d?.draft ?? false} style="accent-color: var(--accent)" />
     存为草稿（不在站点公开显示）
   </label>
 
   <div class="flex gap-3">
-    <button type="submit" class="rounded-lg px-5 py-2.5 font-medium text-white transition-transform hover:-translate-y-0.5" style="background: var(--accent)">
-      {submitLabel}
-    </button>
-    <a href="/admin" class="rounded-lg border px-5 py-2.5 font-medium transition-colors hover:bg-[var(--bg-soft)]" style="border-color: var(--border)">
-      取消
-    </a>
+    <button type="submit" class="btn btn--primary">{submitLabel}</button>
+    <a href="/admin" class="btn btn--ghost">取消</a>
   </div>
 </form>
 

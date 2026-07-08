@@ -34,74 +34,63 @@ const catUrl = (c: string) => (c ? `/admin?category=${encodeURIComponent(c)}` : 
 ---
 
 <AdminLayout title="文章列表">
-  <div class="mb-6 flex items-center justify-between">
-    <h1 class="text-2xl font-bold tracking-tight">文章（{total}）</h1>
-    <a
-      href="/admin/new"
-      class="rounded-lg px-4 py-2 text-sm font-medium text-white transition-transform hover:-translate-y-0.5"
-      style="background: var(--accent)"
-    >
-      + 新建文章
+  <div class="reveal mb-6 flex items-center justify-between" style="--i:0">
+    <h1 class="text-2xl font-bold tracking-tight text-fg">
+      文章 <span class="text-muted">（{total}）</span>
+    </h1>
+    <a href="/admin/new" class="btn btn--primary">
+      <span aria-hidden="true">+</span> 新建文章
     </a>
   </div>
 
   {/* 分类筛选 */}
-  <div class="mb-6 flex flex-wrap gap-2 text-sm">
-    <a
-      href="/admin"
-      class="rounded-full border px-3 py-1 transition-colors"
-      style={!category
-        ? 'border-color: var(--accent); color: var(--accent)'
-        : 'border-color: var(--border); color: var(--text-muted)'}
-    >
-      全部
-    </a>
+  <div class="reveal mb-6 flex flex-wrap gap-2" style="--i:1">
+    <a href="/admin" class:list={['chip', !category && 'chip--accent']}>全部</a>
     {
       categories.map((c) => (
-        <a
-          href={catUrl(c.category)}
-          class="rounded-full border px-3 py-1 transition-colors"
-          style={category === c.category
-            ? 'border-color: var(--accent); color: var(--accent)'
-            : 'border-color: var(--border); color: var(--text-muted)'}
-        >
-          {c.category} {c.count}
+        <a href={catUrl(c.category)} class:list={['chip', category === c.category && 'chip--accent']}>
+          {c.category} <span class="text-faint">{c.count}</span>
         </a>
       ))
     }
   </div>
 
-  <div class="overflow-hidden rounded-xl border" style="border-color: var(--border)">
+  <div class="admin-panel reveal overflow-hidden" style="--i:2">
     {
       items.length === 0 ? (
-        <p class="p-6 text-sm" style="color: var(--text-muted)">没有文章。</p>
+        <p class="p-8 text-center text-sm text-muted">没有文章。</p>
       ) : (
         items.map((post) => (
-          <div class="flex items-center justify-between gap-4 border-b px-5 py-4 last:border-b-0" style="border-color: var(--border)">
+          <div class="flex items-center justify-between gap-4 border-b border-default px-5 py-4 transition-colors last:border-b-0 hover:bg-bg-soft">
             <div class="min-w-0">
               <div class="flex items-center gap-2">
-                <a href={`/admin/edit/${post.id}`} class="truncate font-medium transition-colors hover:text-[var(--accent)]">
+                <a href={`/admin/edit/${post.id}`} class="truncate font-medium text-fg transition-colors hover:text-accent">
                   {post.data.title}
                 </a>
-                {post.data.draft && (
-                  <span class="rounded px-1.5 py-0.5 text-xs" style="background: var(--bg-soft); color: var(--text-muted)">
-                    草稿
-                  </span>
-                )}
+                {post.data.draft && <span class="chip shrink-0">草稿</span>}
               </div>
-              <p class="mt-0.5 text-xs" style="color: var(--text-muted)">
+              <p class="mt-1 text-xs text-faint">
                 {post.data.category} · {fmt(post.data.pubDate)} · 👁 {post.data.views} · /blog/{post.slug}
               </p>
             </div>
-            <div class="flex shrink-0 items-center gap-3 text-sm">
-              <a href={`/blog/${post.slug}/`} target="_blank" style="color: var(--text-muted)" class="transition-colors hover:text-[var(--accent)]">
+            <div class="flex shrink-0 items-center gap-1 text-sm">
+              <a
+                href={`/blog/${post.slug}/`}
+                target="_blank"
+                class="rounded-md px-2.5 py-1 text-muted transition-colors hover:bg-bg-subtle hover:text-fg"
+              >
                 查看
               </a>
-              <a href={`/admin/edit/${post.id}`} style="color: var(--accent)">编辑</a>
+              <a
+                href={`/admin/edit/${post.id}`}
+                class="rounded-md px-2.5 py-1 text-accent transition-colors hover:bg-accent-soft"
+              >
+                编辑
+              </a>
               <form method="POST" onsubmit="return confirm('确定删除这篇文章？')">
                 <input type="hidden" name="_action" value="delete" />
                 <input type="hidden" name="id" value={post.id} />
-                <button type="submit" style="color: #ef4444" class="transition-opacity hover:opacity-70">删除</button>
+                <button type="submit" class="act-delete rounded-md px-2.5 py-1">删除</button>
               </form>
             </div>
           </div>
@@ -115,21 +104,19 @@ const catUrl = (c: string) => (c ? `/admin?category=${encodeURIComponent(c)}` : 
     totalPages > 1 && (
       <div class="mt-6 flex items-center justify-center gap-4 text-sm">
         {page > 1 ? (
-          <a href={pageUrl(page - 1)} class="rounded-lg border px-3 py-1.5 transition-colors hover:bg-[var(--bg-soft)]" style="border-color: var(--border)">
-            ← 上一页
+          <a href={pageUrl(page - 1)} class="btn btn--ghost btn--sm">
+            <span aria-hidden="true">←</span> 上一页
           </a>
         ) : (
-          <span class="rounded-lg border px-3 py-1.5 opacity-40" style="border-color: var(--border)">← 上一页</span>
+          <span class="btn btn--ghost btn--sm cursor-not-allowed opacity-40">← 上一页</span>
         )}
-        <span style="color: var(--text-muted)">
-          第 {page} / {totalPages} 页
-        </span>
+        <span class="text-muted">第 {page} / {totalPages} 页</span>
         {page < totalPages ? (
-          <a href={pageUrl(page + 1)} class="rounded-lg border px-3 py-1.5 transition-colors hover:bg-[var(--bg-soft)]" style="border-color: var(--border)">
-            下一页 →
+          <a href={pageUrl(page + 1)} class="btn btn--ghost btn--sm">
+            下一页 <span class="arrow arrow--right">→</span>
           </a>
         ) : (
-          <span class="rounded-lg border px-3 py-1.5 opacity-40" style="border-color: var(--border)">下一页 →</span>
+          <span class="btn btn--ghost btn--sm cursor-not-allowed opacity-40">下一页 →</span>
         )}
       </div>
     )

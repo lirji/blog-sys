@@ -19,7 +19,7 @@ if (Astro.request.method === 'POST') {
 ---
 
 <AdminLayout title="新建文章">
-  <a href="/admin" class="text-sm transition-colors hover:text-[var(--accent)]" style="color: var(--text-muted)">← 返回列表</a>
-  <h1 class="mb-8 mt-3 text-2xl font-bold tracking-tight">新建文章</h1>
+  <a href="/admin" class="link-underline text-sm text-muted">← 返回列表</a>
+  <h1 class="mb-8 mt-3 text-2xl font-bold tracking-tight text-fg">新建文章</h1>
   <AdminForm submitLabel="创建" error={error} />
 </AdminLayout>

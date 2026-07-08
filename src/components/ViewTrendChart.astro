@@ -59,6 +59,21 @@ const totalUV = Math.max(...points.map((p) => p.uv), 0);
       </linearGradient>
     </defs>
 
+    {/* 纵向淡网格：落在 x 轴标签位置，增强读数对位 */}
+    {
+      xLabels.map(({ i }) => (
+        <line
+          x1={x(i)}
+          y1={padT}
+          x2={x(i)}
+          y2={padT + innerH}
+          stroke="var(--border)"
+          stroke-width="1"
+          stroke-opacity="0.4"
+        />
+      ))
+    }
+
     {/* 网格 + y 轴刻度 */}
     {
       yTicks.map((v) => (
@@ -86,13 +101,24 @@ const totalUV = Math.max(...points.map((p) => p.uv), 0);
     {/* UV 线（虚线） */}
     <path d={uvLine} fill="none" stroke="var(--text-muted)" stroke-width="1.5" stroke-dasharray="4 3" stroke-linejoin="round"></path>
 
-    {/* 数据点 + 悬停提示 */}
+    {/* 数据点 + 悬停提示（hover 放大） */}
     {
       points.map((p, i) => (
-        <circle cx={x(i)} cy={y(p.pv)} r="2.5" fill="var(--accent)">
+        <circle class="chart-dot" cx={x(i)} cy={y(p.pv)} r="2" fill="var(--accent)">
           <title>{`${p.date}  PV ${p.pv} · UV ${p.uv}`}</title>
         </circle>
       ))
     }
   </svg>
 </div>
+
+<style>
+  /* 数据点默认更小，hover 放大更精致（r 在现代浏览器可过渡） */
+  .chart-dot {
+    cursor: pointer;
+    transition: r var(--dur-fast) var(--ease-out);
+  }
+  .chart-dot:hover {
+    r: 5;
+  }
+</style>
