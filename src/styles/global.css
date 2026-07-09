@@ -564,6 +564,17 @@ mark {
   text-wrap: pretty;
 }
 
+/* 标题 h1：兜底样式。正文若保留了非标题性的一级标题（去重未命中），
+   字号明显小于页面主标题（PostLayout 为 text-3xl/4xl），避免喧宾夺主。 */
+.prose :where(h1) {
+  font-size: 1.6rem;
+  line-height: 1.3;
+  margin-top: 2em;
+  margin-bottom: 0.8em;
+  letter-spacing: -0.01em;
+  scroll-margin-top: 5rem;
+}
+
 /* 标题：h2 前缀 accent 竖条 + 锚点滚动留白 */
 .prose :where(h2) {
   margin-top: 2.5em;

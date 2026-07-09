@@ -332,6 +332,25 @@ export function parsePostForm(form: FormData): { values?: NewPostRow; error?: st
 }
 
 // ---- 视图辅助 ----
+
+/**
+ * 估算中文阅读时长（分钟）。
+ * 粗略统计正文「可读字符数」：剔除代码块 / 行内代码 / 图片，链接仅保留文字，
+ * 去掉常见 Markdown 标记与空白后按每分钟约 400 字换算，最少 1 分钟。
+ * 纯函数，不依赖也不改动其它逻辑。
+ */
+export function readingMinutes(body: string): number {
+  const text = (body ?? '')
+    .replace(/```[\s\S]*?```/g, '') // 围栏代码块
+    .replace(/`[^`]*`/g, '') // 行内代码
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, '') // 图片
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1') // 链接保留文字
+    .replace(/^[ \t]*[#>\-*+]+[ \t]*/gm, '') // 行首标题/引用/列表符号
+    .replace(/[*_~`#>|]/g, ''); // 残余强调/表格标记
+  const chars = text.replace(/\s+/g, '').length; // 不含空白的可读字符数
+  return Math.max(1, Math.round(chars / 400));
+}
+
 export function getCategory(post: Post): string {
   return post.data.category || '未分类';
 }

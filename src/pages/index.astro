@@ -2,7 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PostCard from '../components/PostCard.astro';
 import { SITE_DESCRIPTION } from '../consts';
-import { getPublishedPosts, getPopularPosts, postHref, getCategory } from '../lib/posts';
+import { getPublishedPosts, getPopularPosts, postHref, getCategory, readingMinutes } from '../lib/posts';
 
 const posts = (await getPublishedPosts()).slice(0, 4);
 const popular = await getPopularPosts(5);
@@ -10,8 +10,8 @@ const popular = await getPopularPosts(5);
 
 <BaseLayout>
   <section class="hero pt-8 pb-16 sm:pt-16">
-    <div class="flex items-center justify-between gap-8">
-      <div class="min-w-0">
+    <div class="flex items-center gap-10">
+      <div class="min-w-0 max-w-2xl">
         {/* 状态胶囊 */}
         <div
           class="mb-5 inline-flex items-center gap-2 rounded-full border border-default px-3 py-1 text-xs text-muted backdrop-blur-sm"
@@ -59,6 +59,7 @@ const popular = await getPopularPosts(5);
               tags={post.data.tags}
               cover={post.data.cover}
               category={getCategory(post)}
+              minutes={readingMinutes(post.body)}
             />
           </div>
         ))

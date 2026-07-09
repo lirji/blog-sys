@@ -1,7 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PostCard from '../../components/PostCard.astro';
-import { getPublishedPosts, postHref, getCategory } from '../../lib/posts';
+import { getPublishedPosts, postHref, getCategory, readingMinutes } from '../../lib/posts';
 
 const { category } = Astro.params;
 const posts = (await getPublishedPosts()).filter((p) => getCategory(p) === category);
@@ -18,7 +18,7 @@ const posts = (await getPublishedPosts()).filter((p) => getCategory(p) === categ
     <p class="mt-2 text-faint">共 {posts.length} 篇。</p>
   </div>
 
-  <div class="grid gap-5">
+  <div class="grid gap-4">
     {
       posts.map((post, i) => (
         <div class="reveal" style={`--i:${Math.min(i, 8)}`}>
@@ -30,6 +30,7 @@ const posts = (await getPublishedPosts()).filter((p) => getCategory(p) === categ
             tags={post.data.tags}
             cover={post.data.cover ?? undefined}
             category={getCategory(post)}
+            minutes={readingMinutes(post.body)}
           />
         </div>
       ))

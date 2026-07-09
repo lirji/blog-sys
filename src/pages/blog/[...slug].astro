@@ -8,7 +8,33 @@ const post = slug ? await getPostBySlug(slug) : null;
 if (!post || post.data.draft) {
   return new Response(null, { status: 404, statusText: 'Not Found' });
 }
-const { html, headings } = renderMarkdown(post.body);
+
+/** 归一化标题用于比较：去全部空白（含全角空格）+ 转小写 */
+function normTitle(s: string): string {
+  return s.replace(/\s+/g, '').toLowerCase();
+}
+
+/**
+ * 去掉正文最前面与页面主标题重复的一级标题，避免详情页出现「双 H1」。
+ * 仅处理开头第一个 `# xxx`（跳过前导空行）；正文中间的标题一律不动。
+ * 不匹配则原样返回。TOC 只收 h2/h3，故删首个 h1 不影响目录。
+ */
+function stripLeadingDuplicateH1(body: string, title: string): string {
+  const lines = body.split('\n');
+  let i = 0;
+  while (i < lines.length && lines[i].trim() === '') i++; // 跳过前导空行
+  if (i >= lines.length) return body;
+  // 仅匹配一级标题：可选 3 空格缩进 + `# ` + 内容（兼容闭合式 ATX 结尾的 #）
+  const m = /^ {0,3}#[ \t]+(.+?)(?:[ \t]+#+)?[ \t]*$/.exec(lines[i]);
+  if (m && normTitle(m[1]) === normTitle(title)) {
+    lines.splice(i, 1);
+    return lines.join('\n');
+  }
+  return body;
+}
+
+const body = stripLeadingDuplicateH1(post.body, post.data.title);
+const { html, headings } = renderMarkdown(body);
 const { newer, older } = await getAdjacentPosts(post);
 
 const ip =
